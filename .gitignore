@@ -130,3 +130,5 @@ dmypy.json
 
 # User specific
 /local
+/testscripts
+/.idea
