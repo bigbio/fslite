@@ -7,8 +7,11 @@
 ### Description
 
 *fsspark* is a python module to perform feature selection and machine learning based on spark.
-Pipelines written using *fsspark* can be divided roughly in four major stages: a) data pre-processing, 
-b) univariate filters, c) multivariate filters and d) machine learning wrapped with cross-validation.
+Pipelines written using *fsspark* can be divided roughly in four major stages: 1) data pre-processing, 2) univariate 
+filters, 3) multivariate filters and 4) machine learning wrapped with cross-validation (Fig 1).
+
+![Feature Selection flowchart](images/fs_workflow.png)
+*Figure 1. Feature selection workflow example implemented in fsspark.*
 
 ### 1. Data pre-processing
 
