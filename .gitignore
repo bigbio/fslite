@@ -129,6 +129,6 @@ dmypy.json
 .pyre/
 
 # User specific
-/local
-/testscripts
-/.idea
+local/
+testscripts/
+.idea/*
