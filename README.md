@@ -57,7 +57,7 @@ b) univariate filters, c) multivariate filters and d) machine learning wrapped w
 
 Check it out [here](fsspark/pipeline/fs_corr_rf.py) a full FS pipeline example.
 
-```angular2html
+```python
 """
 Example of a feature selection pipeline implemented in fsspark.
 
