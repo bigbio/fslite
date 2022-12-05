@@ -1,3 +1,4 @@
+import logging
 from typing import (Union,
                     Optional,
                     List,
@@ -18,6 +19,10 @@ from pyspark.pandas.series import Series
 from pyspark.sql.functions import (monotonically_increasing_id,
                                    col,
                                    rand)
+
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("FSSPARK")
+logger.setLevel(logging.INFO)
 
 
 class FSDataFrame:
@@ -249,7 +254,16 @@ class FSDataFrame:
 
         :return: FSDataFrame
         """
+
+        current_features = self.get_features_names()
+        if len(set(current_features).intersection(features)) == 0:
+            logger.warning(f"There is no overlap of specified features with the input data frame.\n"
+                           f"Skipping this filter step...")
+            return self
+
+        count_a = self.count_features()
         sdf = self.get_sdf()
+
         if keep:
             sdf = sdf.select(
                 self.__sample_col,
@@ -259,7 +273,12 @@ class FSDataFrame:
         else:
             sdf = sdf.drop(*features)
 
-        return self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_name)
+        fsdf_filtered = self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_name)
+        count_b = fsdf_filtered.count_features()
+
+        logger.info(f"{count_b} features out of {count_a} remain after applying this filter...")
+
+        return fsdf_filtered
 
     def filter_features_by_index(self, feature_indices: Set[int], keep: bool = True) -> 'FSDataFrame':
         """
@@ -274,13 +293,15 @@ class FSDataFrame:
 
     def get_label_strata(self) -> list:
         """
-        TODO: Print out a warning when the number of levels in cat variable is too high (cutoff ... 20, 30, ?).
-              Suggest considering the variable as continuous.
         Get strata from a categorical column in DataFrame.
 
         :return: List of levels for categorical variable.
         """
         levels = self.get_sample_label_indexed().unique().tolist()
+        number_of_lvs = len(levels)
+        if number_of_lvs > 20:  # TODO: Check if this is a right cutoff.
+            logger.warning(f"Number of observed levels too high: {number_of_lvs}.\n"
+                           f"Should this variable be considered continuous?")
         return levels
 
     def scale_features(self, scaler_method: str = 'standard', **kwargs) -> 'FSDataFrame':

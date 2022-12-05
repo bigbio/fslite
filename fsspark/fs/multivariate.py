@@ -1,3 +1,4 @@
+import logging
 from typing import List
 
 import numpy as np
@@ -7,6 +8,10 @@ from pyspark.ml.stat import Correlation
 
 from fsspark.fs.core import FSDataFrame
 from fsspark.fs.utils import find_maximal_independent_set
+
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("FSSPARK:MULTIVARIATE")
+logger.setLevel(logging.INFO)
 
 
 def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
@@ -125,5 +130,7 @@ def multivariate_filter(fsdf: FSDataFrame,
         selected_features = multivariate_variance_selector(fsdf, **kwargs)
     else:
         raise ValueError("`method` must be one of m_corr or variance.")
+
+    logger.info(f"Applying multivariate filter {multivariate_method}.")
 
     return fsdf.filter_features(selected_features, keep=True)
