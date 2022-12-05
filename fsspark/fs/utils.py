@@ -1,3 +1,4 @@
+import logging
 from typing import Dict, Tuple, Set
 
 import networkx as nx
@@ -6,6 +7,10 @@ from networkx.algorithms.mis import maximal_independent_set
 from pyspark.ml.feature import Imputer
 
 from fsspark.fs.core import FSDataFrame
+
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("FSSPARK:UTILS")
+logger.setLevel(logging.INFO)
 
 
 def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
@@ -17,13 +22,13 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     """
 
     sdf = fsdf.get_sdf()  # current Spark DataFrame.
-    n = sdf.count()  # number of instances/samples.
+    n_instances = fsdf.count_instances()  # number of instances/samples.
     features = fsdf.get_features_names()  # list of features (column) names
 
     missing_rates = sdf.select(
         [
             (
-                f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n
+                f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n_instances
             ).alias(c)
             for c in features
         ]
@@ -33,19 +38,20 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
 
 
 def filter_missingness_rate(
-    fsdf: FSDataFrame, threshold: float = 0.15, get_rates: bool = False
+    fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
 
     :param fsdf: FSDataFrame.
     :param threshold: maximal missingness rate allowed to keep a feature.
-    :param get_rates: If true, get also the computed rates per features.
-
     :return:
     """
     d_rates = compute_missingness_rate(fsdf)
     features_to_remove = [k for k in d_rates.keys() if d_rates.get(k) >= threshold]
+
+    logger.info(f"Applying missingness rate filter with threshold at {threshold}.")
+
     fsdf_filtered = fsdf.filter_features(features=features_to_remove, keep=False)
 
     return fsdf_filtered
@@ -77,6 +83,8 @@ def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
         .transform(sdf)
     )
 
+    logger.info(f"Imputing features missing values with method {strategy}.")
+
     return FSDataFrame(
         sdf_imputed,
         fsdf.get_sample_col_name(),
@@ -88,13 +96,14 @@ def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
 def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[int]:
     """
     Given a set of indices pairs, returns a random maximal independent set.
-    # TODO: Warning: This feature is experimental.
 
     :param pairs:
     :param keep: If true (default), return the maximal independent set.
                  Otherwise, return the remaining indices after removing the maximal independent set.
     :return:
     """
+    logger.warning("This method is experimental and have been not extensively tested...")
+
     graph = nx.Graph()
     graph.add_edges_from(pairs)
     max_ind_set = maximal_independent_set(graph)
