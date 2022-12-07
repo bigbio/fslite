@@ -1,3 +1,4 @@
+import logging
 from typing import (Union,
                     Optional,
                     List,
@@ -18,6 +19,10 @@ from pyspark.pandas.series import Series
 from pyspark.sql.functions import (monotonically_increasing_id,
                                    col,
                                    rand)
+
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("FSSPARK")
+logger.setLevel(logging.INFO)
 
 
 class FSDataFrame:
@@ -42,7 +47,9 @@ class FSDataFrame:
             df: Union[pyspark.sql.DataFrame, pyspark.pandas.DataFrame],
             sample_col: str = None,
             label_col: str = None,
-            row_index_col: Optional[str] = '_row_index'
+            row_index_col: Optional[str] = '_row_index',
+            parse_col_names: bool = False,
+            parse_features: bool = False,
     ):
         """
         Create an instance of FSDataFrame.
@@ -54,6 +61,8 @@ class FSDataFrame:
         :param sample_col: Sample id column name
         :param label_col: Sample label column name
         :param row_index_col: Optional. Column name of row indices.
+        :param parse_col_names:
+        :param parse_features:
         """
 
         self.__df = self._convert_psdf_to_sdf(df)
@@ -64,9 +73,21 @@ class FSDataFrame:
         # check input dataframe
         self._check_df()
 
-        # If specified row index column name does not exist, add row index to the dataframe
+        # replace dots in column names, if any.
+        if parse_col_names:
+            #  TODO: Dots in column names are prone to errors, since dots are used to access attributes from DataFrame.
+            #        Should we make this replacement optional? Or print out a warning?
+            self.__df = self.__df.toDF(*(c.replace('.', '_') for c in self.__df.columns))
+
+        # If the specified row index column name does not exist, add row index to the dataframe
         if self.__row_index_name not in self.__df.columns:
             self.__df = self._add_row_index(index_name=self.__row_index_name)
+
+        if parse_features:
+            # coerce all features to float
+            non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_name]
+            feature_cols = [c for c in self.__df.columns if c not in non_features_cols]
+            self.__df = self.__df.withColumns({c: self.__df[c].cast('float') for c in feature_cols})
 
         self.__indexed_features = self._set_indexed_cols()
         self.__indexed_instances = self._set_indexed_rows()
@@ -249,7 +270,16 @@ class FSDataFrame:
 
         :return: FSDataFrame
         """
+
+        current_features = self.get_features_names()
+        if len(set(current_features).intersection(features)) == 0:
+            logger.warning(f"There is no overlap of specified features with the input data frame.\n"
+                           f"Skipping this filter step...")
+            return self
+
+        count_a = self.count_features()
         sdf = self.get_sdf()
+
         if keep:
             sdf = sdf.select(
                 self.__sample_col,
@@ -259,7 +289,12 @@ class FSDataFrame:
         else:
             sdf = sdf.drop(*features)
 
-        return self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_name)
+        fsdf_filtered = self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_name)
+        count_b = fsdf_filtered.count_features()
+
+        logger.info(f"{count_b} features out of {count_a} remain after applying this filter...")
+
+        return fsdf_filtered
 
     def filter_features_by_index(self, feature_indices: Set[int], keep: bool = True) -> 'FSDataFrame':
         """
@@ -274,13 +309,15 @@ class FSDataFrame:
 
     def get_label_strata(self) -> list:
         """
-        TODO: Print out a warning when the number of levels in cat variable is too high (cutoff ... 20, 30, ?).
-              Suggest considering the variable as continuous.
         Get strata from a categorical column in DataFrame.
 
         :return: List of levels for categorical variable.
         """
         levels = self.get_sample_label_indexed().unique().tolist()
+        number_of_lvs = len(levels)
+        if number_of_lvs > 20:  # TODO: Check if this is a right cutoff.
+            logger.warning(f"Number of observed levels too high: {number_of_lvs}.\n"
+                           f"Should this variable be considered continuous?")
         return levels
 
     def scale_features(self, scaler_method: str = 'standard', **kwargs) -> 'FSDataFrame':
@@ -347,7 +384,7 @@ class FSDataFrame:
         # create a temporal indexed categorical variable for sampling and splitting the data set.
         tmp_label_col = '_tmp_label_indexed'
         if label_type_cat:
-            sdf = _string_indexer(sdf=sdf, label_col=label_col, output_col=tmp_label_col)
+            sdf = _string_indexer(sdf=sdf, input_col=label_col, output_col=tmp_label_col)
         else:
             # If the input label is continuous, create a uniform random distribution [0,1] and binarize this variable.
             # It will be used then as categorical for sampling the dataframe.
@@ -355,8 +392,9 @@ class FSDataFrame:
             sdf = (_binarizer(sdf,
                               input_col="_tmp_uniform_rand",
                               output_col=tmp_label_col,
-                              threshold=0.5)
-                   .drop("_tmp_uniform_rand"))
+                              threshold=0.5,
+                              drop_input_col=True)
+                   )
 
         # Get number of levels for categorical variable.
         levels = [lv[tmp_label_col] for lv in sdf.select([tmp_label_col]).distinct().collect()]
@@ -445,30 +483,34 @@ def _disassemble_column_vector(sdf: pyspark.sql.DataFrame,
 
 
 def _string_indexer(sdf: pyspark.sql.DataFrame,
-                    label_col: str = None,
-                    output_col: str = "_label_indexed") -> pyspark.sql.DataFrame:
+                    input_col: str = None,
+                    output_col: str = "_label_indexed",
+                    drop_input_col: bool = False) -> pyspark.sql.DataFrame:
     """
     Wrapper for `pyspark.ml.feature.StringIndexer`.
     See https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.StringIndexer.html.
 
     :param sdf:
-    :param label_col:
+    :param input_col:
     :param output_col:
+    :param drop_input_col:
+
     :return:
     """
     sdf = (StringIndexer()
-           .setInputCol(label_col)
+           .setInputCol(input_col)
            .setOutputCol(output_col)
            .fit(sdf)
            .transform(sdf)
            )
-    return sdf
+    return sdf.drop(input_col) if drop_input_col else sdf
 
 
 def _binarizer(sdf: pyspark.sql.DataFrame,
                input_col: str = None,
                output_col: str = "_label_binarized",
-               threshold: float = 0.5) -> pyspark.sql.DataFrame:
+               threshold: float = 0.5,
+               drop_input_col: bool = False) -> pyspark.sql.DataFrame:
     """
      Wrapper for `pyspark.ml.feature.Binarizer`.
      See https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.Binarizer.html
@@ -479,6 +521,8 @@ def _binarizer(sdf: pyspark.sql.DataFrame,
     :param threshold: Threshold used to binarize continuous features.
                       The features greater than the threshold will be binarized to 1.0.
                       The features equal to or less than the threshold will be binarized to 0.0
+    :param drop_input_col:
+
     :return:
     """
     sdf = (Binarizer()
@@ -488,7 +532,7 @@ def _binarizer(sdf: pyspark.sql.DataFrame,
            .transform(sdf)
            )
 
-    return sdf
+    return sdf.drop(input_col) if drop_input_col else sdf
 
 
 class DataFormatError(Exception):

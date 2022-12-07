@@ -6,10 +6,11 @@ for feature selection (e.g., rank by feature importance) and prediction.
 """
 
 import pyspark.sql
+import pyspark.pandas as pd
 from pyspark.ml.classification import (
     RandomForestClassifier,
     LinearSVC,
-    RandomForestClassificationModel,
+    RandomForestClassificationModel, LinearSVCModel,
 )
 from pyspark.ml.evaluation import (
     MulticlassClassificationEvaluator,
@@ -23,7 +24,7 @@ from fsspark.fs.core import FSDataFrame
 
 
 def cv_rf_classification(
-    fsdf: FSDataFrame, binary_classification: bool = True
+        fsdf: FSDataFrame, binary_classification: bool = True
 ) -> CrossValidatorModel:
     """
     Cross-validation with Random Forest classifier as estimator.
@@ -69,7 +70,7 @@ def cv_rf_classification(
 
 
 def cv_svc_classification(
-    fsdf: FSDataFrame,
+        fsdf: FSDataFrame,
 ) -> CrossValidatorModel:
     """
     Cross-validation with Linear Support Vector classifier as estimator.
@@ -192,6 +193,8 @@ def get_accuracy(model: CrossValidatorModel) -> float:
     best_model = model.bestModel
     if isinstance(best_model, RandomForestClassificationModel):
         acc = best_model.summary.accuracy
+    elif isinstance(best_model, LinearSVCModel):
+        acc = best_model.summary().accuracy
     else:
         acc = None
     return acc
@@ -217,3 +220,64 @@ def get_predictions(model: CrossValidatorModel) -> pyspark.sql.DataFrame:
     else:
         pred = None
     return pred
+
+
+def get_feature_scores(model: CrossValidatorModel,
+                       indexed_features: pyspark.pandas.series.Series = None) -> pd.DataFrame:
+    """
+    Extract features scores (e.g. importance or coefficients) from a trained CrossValidatorModel.
+
+    # TODO: This function should be able to parse all available models.
+            Currently only support RandomForestClassificationModel and LinearSVCModel.
+
+    :param model: Trained CrossValidatorModel
+    :param indexed_features: If provided, report features names rather than features indices.
+                             Usually, the output from `training_data.get_features_indexed()`.
+
+    :return: Pandas on DataFrame with feature importance
+    """
+
+    df_features = (None if indexed_features is None
+                   else indexed_features.to_dataframe(name='features')
+                   )
+
+    best_model = model.bestModel
+
+    if isinstance(best_model, RandomForestClassificationModel):
+
+        importance = pd.DataFrame(data=best_model.featureImportances.toArray(),
+                                  columns=['importance'])
+
+        df = (importance
+              .reset_index(level=0)
+              .rename(columns={"index": "feature_index"})
+              )
+
+        if df_features is not None:
+            # if available, get feature names rather than reporting feature index.
+            df = (df_features
+                  .merge(importance, how='right', left_index=True, right_index=True)  # index-to-index merging
+                  )
+
+        return df.sort_values(by="importance", ascending=False)
+
+    elif isinstance(best_model, LinearSVCModel):
+
+        coefficients = pd.DataFrame(data=best_model.coefficients,
+                                    columns=['coefficients'])
+
+        df = (coefficients
+              .reset_index(level=0)
+              .rename(columns={"index": "feature_index"})
+              )
+
+        if indexed_features is not None:
+            df = (df_features
+                  .merge(coefficients, how='right', left_index=True, right_index=True)  # index-to-index merging
+                  )
+
+        return df.sort_values(by="coefficients", ascending=False)
+
+    else:
+        df = None  # this should follow with parsing options for the different models.
+        return df

@@ -1,9 +1,14 @@
+import logging
 from typing import Dict, List
 
 import pyspark.sql.functions as f
 from pyspark.ml.feature import UnivariateFeatureSelector
 
 from fsspark.fs.core import FSDataFrame
+
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("FSSPARK:UNIVARIATE")
+logger.setLevel(logging.INFO)
 
 
 def compute_univariate_corr(fsdf: FSDataFrame) -> Dict[str, float]:
@@ -108,5 +113,7 @@ def univariate_filter(fsdf: FSDataFrame,
         selected_features = univariate_correlation_selector(fsdf, **kwargs)
     else:
         raise ValueError("`method` must be one of anova, f_regression or u_corr.")
+
+    logger.info(f"Applying univariate filter {univariate_method}.")
 
     return fsdf.filter_features(selected_features, keep=True)
