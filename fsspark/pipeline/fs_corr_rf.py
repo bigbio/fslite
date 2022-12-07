@@ -8,7 +8,7 @@ multivariate correlation filter and Randon Forest classification.
 
 from fsspark.context import init_spark, stop_spark_session
 from fsspark.fs.core import FSDataFrame
-from fsspark.fs.ml import cv_rf_classification, get_accuracy, get_predictions
+from fsspark.fs.ml import cv_rf_classification, get_accuracy, get_predictions, get_feature_scores
 from fsspark.fs.multivariate import multivariate_filter
 from fsspark.fs.univariate import univariate_filter
 from fsspark.fs.utils import filter_missingness_rate, impute_missing
@@ -59,5 +59,11 @@ print(f"Training accuracy: {acc}")
 # Get predictions from training
 pred = get_predictions(model=cv_model)
 pred.show()
+
+# Get feature importance
+imp = get_feature_scores(model=cv_model,
+                         indexed_features=training_df.get_features_indexed()
+                         )
+print(imp.head(10))
 
 stop_spark_session()
