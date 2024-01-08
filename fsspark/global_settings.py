@@ -4,7 +4,8 @@ SPARK_EXTRA_SETTINGS = {'spark.executor.memory': '8g',
                         "spark.memory.offHeap.enabled": 'true',
                         "spark.memory.offHeap.size": '2g',
                         "spark.sql.pivotMaxValues": '60000',
-                        "spark.network.timeout": '100000'
+                        "spark.network.timeout": '100000',
+                        "spark.sql.session.timeZone": "UTC"
                         }
 
 # pyarrow settings to make available columnar data processing
