@@ -324,8 +324,8 @@ class FSDataFrame:
         """
         Scales features in DataFrame
 
-        :param scaler_method:
-        :return:
+        :param scaler_method: One of: min_max, max_abs, standard or robust.
+        :return: FSDataFrame with scaled features.
         """
 
         if scaler_method == 'min_max':
