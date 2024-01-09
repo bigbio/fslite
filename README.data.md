@@ -36,21 +36,21 @@ The following is an example of a TSV file with a binary response variable:
 
 - `import_table` - Import data from a TSV file into a Spark Data Frame (sdf).
 
-```doctest
->>> from fsspark.utils.io import import_table
->>> sdf = import_table('data.tsv.bgz', 
-                        sep='\t', 
-                        n_partitions=5)
+```python
+from fsspark.utils.io import import_table
+sdf = import_table('data.tsv.bgz', 
+                    sep='\t', 
+                    n_partitions=5)
 ```
 
 - `import_table_as_psdf` - Import data from a TSV file into a Spark Data Frame (sdf) and 
 convert it into a Pandas on Spark Data Frame (psdf).
 
-```doctest
->>> from fsspark.utils.io import import_table_as_psdf
->>> psdf = import_table_as_psdf('data.tsv.bgz', 
-                                sep='\t', 
-                                n_partitions=5)
+```python
+from fsspark.utils.io import import_table_as_psdf
+psdf = import_table_as_psdf('data.tsv.bgz', 
+                            sep='\t', 
+                            n_partitions=5)
 ```
 
 ### The Feature Selection Spark Data Frame (FSDataFrame)
@@ -72,23 +72,24 @@ contains the response variable.
 
 #### How to create a Feature Selection Spark Data Frame (FSDF)
 
-```doctest
->>> from fsspark.context import init_spark, stop_spark_session
->>> from fsspark.fs.core import FSDataFrame
->>> from fsspark.utils.io import import_table_as_psdf
+```python
+from fsspark.context import init_spark, stop_spark_session
+from fsspark.fs.core import FSDataFrame
+from fsspark.utils.io import import_table_as_psdf
 
->>> # Init spark
->>> init_spark()
->>> # Import data
->>> psdf = import_table_as_psdf('data.tsv.bgz', 
-                                sep='\t', 
-                                n_partitions=5)
->>> # Create FSDataFrame
->>> fsdf = FSDataFrame(psdf, 
-                       sample_col='sample_id', 
-                       label_col='response')
->>> # Stop spark
->>> stop_spark_session()
+# Init spark
+init_spark()
+
+# Import data
+psdf = import_table_as_psdf('data.tsv.bgz', 
+                            sep='\t', 
+                            n_partitions=5)
+# Create FSDataFrame
+fsdf = FSDataFrame(psdf, 
+                   sample_col='sample_id', 
+                   label_col='response')
+# Stop spark
+stop_spark_session()
 ```
 
 
