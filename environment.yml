@@ -1,8 +1,9 @@
 name: fsspark-venv
 channels:
   - defaults
+  - conda-forge
 dependencies:
-  - python>=3.9
+  - python==3.10
   - pip
   - pip:
       - setuptools~=65.5.0
