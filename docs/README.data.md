@@ -64,7 +64,7 @@ contains the response variable.
 
 `Warning:` dots in columns names are replaced automatically by underscores.
 
-![FSDF](images/FSDF_structure.png)
+![FSDF](../images/FSDF_structure.png)
 
 **Figure 1.** Schematic representation of the Feature Selection Spark Data Frame (FSDataFrame).
 
