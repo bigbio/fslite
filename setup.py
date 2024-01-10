@@ -18,7 +18,9 @@ setup(
         "pyspark",
         "numpy",
         "networkx",
-        "setuptools"
+        "setuptools",
+        "pandas",
+        "pyarrow"
     ],
     classifiers=[
         # Classifiers for your package
