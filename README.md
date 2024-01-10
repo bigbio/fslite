@@ -1,3 +1,5 @@
+[![Python application](https://github.com/enriquea/fsspark/actions/workflows/python-app.yml/badge.svg?branch=main)](https://github.com/enriquea/fsspark/actions/workflows/python-app.yml)
+
 # fsspark
 
 ---
