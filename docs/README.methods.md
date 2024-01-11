@@ -64,7 +64,7 @@ multivariate correlation filter and Randon Forest classification.
 
 """
 
-from fsspark.context import init_spark, stop_spark_session
+from fsspark.config.context import init_spark, stop_spark_session
 from fsspark.fs.core import FSDataFrame
 from fsspark.fs.ml import cv_rf_classification, get_accuracy, get_predictions
 from fsspark.fs.multivariate import multivariate_filter

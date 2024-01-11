@@ -1,9 +1,9 @@
 import unittest
 
-from fsspark.context import init_spark, stop_spark_session
+from fsspark.config.context import init_spark, stop_spark_session
 from fsspark.fs.core import FSDataFrame
 from fsspark.utils.datasets import get_tnbc_data_path
-from fsspark.utils.io import import_table, import_table_as_psdf
+from fsspark.utils.io import import_table_as_psdf
 
 
 class FSDataFrameTest(unittest.TestCase):

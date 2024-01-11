@@ -3,7 +3,7 @@ import warnings
 import pyspark.pandas
 import pyspark.sql
 
-from fsspark.context import PANDAS_ON_SPARK_API_SETTINGS
+from fsspark.config.context import PANDAS_ON_SPARK_API_SETTINGS
 
 warnings.filterwarnings("ignore")
 

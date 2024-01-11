@@ -2,9 +2,9 @@ import os
 import pyspark
 from pyspark.sql import SparkSession
 
-from fsspark.global_settings import (SPARK_EXTRA_SETTINGS,
-                                     PYARROW_SETTINGS,
-                                     PANDAS_ON_SPARK_API_SETTINGS)
+from fsspark.config.global_settings import (SPARK_EXTRA_SETTINGS,
+                                            PYARROW_SETTINGS,
+                                            PANDAS_ON_SPARK_API_SETTINGS)
 
 
 os.environ['PYARROW_IGNORE_TIMEZONE'] = "1"

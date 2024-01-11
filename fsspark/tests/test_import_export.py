@@ -3,7 +3,7 @@ import unittest
 import pyspark
 import pyspark.pandas as ps
 
-from fsspark.context import init_spark, stop_spark_session
+from fsspark.config.context import init_spark, stop_spark_session
 from fsspark.utils.datasets import get_tnbc_data_path
 from fsspark.utils.io import import_table, import_table_as_psdf
 

@@ -73,7 +73,7 @@ contains the response variable.
 #### How to create a Feature Selection Spark Data Frame (FSDF)
 
 ```python
-from fsspark.context import init_spark, stop_spark_session
+from fsspark.config.context import init_spark, stop_spark_session
 from fsspark.fs.core import FSDataFrame
 from fsspark.utils.io import import_table_as_psdf
 
@@ -81,12 +81,12 @@ from fsspark.utils.io import import_table_as_psdf
 init_spark()
 
 # Import data
-psdf = import_table_as_psdf('data.tsv.bgz', 
-                            sep='\t', 
+psdf = import_table_as_psdf('data.tsv.bgz',
+                            sep='\t',
                             n_partitions=5)
 # Create FSDataFrame
-fsdf = FSDataFrame(psdf, 
-                   sample_col='sample_id', 
+fsdf = FSDataFrame(psdf,
+                   sample_col='sample_id',
                    label_col='response')
 # Stop spark
 stop_spark_session()
