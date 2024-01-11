@@ -3,7 +3,7 @@ import warnings
 import pyspark.pandas
 import pyspark.sql
 
-from fsspark.context import PANDAS_ON_SPARK_API_SETTINGS
+from fsspark.config.context import PANDAS_ON_SPARK_API_SETTINGS
 
 warnings.filterwarnings("ignore")
 
@@ -45,8 +45,8 @@ def import_table_as_psdf(path: str,
     """
     Import tsv file as Pandas on Spark DataFrame
 
-    :param path: File path
-    :param sep:
+    :param path: Path to TSV file
+    :param sep: Column separator (default: "\t")
     :param n_partitions: Minimal number of partitions
 
     :return: Pandas on Spark DataFrame

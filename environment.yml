@@ -1,0 +1,14 @@
+name: fsspark-venv
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python==3.10
+  - pip
+  - pip:
+      - setuptools~=65.5.0
+      - pyspark~=3.3.0
+      - networkx~=2.8.7
+      - numpy~=1.23.4
+      - pandas~=1.5.1
+      - pyarrow~=8.0.0

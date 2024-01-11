@@ -13,7 +13,7 @@ def get_tnbc_data_path() -> str:
     return tnbc_path.__str__()
 
 
-def get_tnbc_missing_path() -> str:
+def get_tnbc_data_missing_values_path() -> str:
     """
     Return path to example dataset (TNBC) with missing values.
 

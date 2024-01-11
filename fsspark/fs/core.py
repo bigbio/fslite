@@ -61,8 +61,8 @@ class FSDataFrame:
         :param sample_col: Sample id column name
         :param label_col: Sample label column name
         :param row_index_col: Optional. Column name of row indices.
-        :param parse_col_names:
-        :param parse_features:
+        :param parse_col_names: Replace dots (.) in column names with underscores.
+        :param parse_features: Coerce all features to float.
         """
 
         self.__df = self._convert_psdf_to_sdf(df)
@@ -112,6 +112,8 @@ class FSDataFrame:
     def _convert_psdf_to_sdf(df: Union[pyspark.pandas.DataFrame, pyspark.sql.DataFrame]) -> pyspark.sql.DataFrame:
         """
         Convert Pandas on Spark DataFrame (psdf) to Spark DataFrame (sdf).
+
+        :param df: Spark (or Pandas on Spark) DataFrame
         :return: Spark DataFrame
         """
         return df.to_spark(index_col=None) if isinstance(df, pyspark.pandas.DataFrame) else df
@@ -130,7 +132,7 @@ class FSDataFrame:
     def _set_indexed_rows(self) -> pyspark.pandas.series.Series:
         """
         Create a distributed indexed Series representing samples labels.
-        It will use already existing row indices.
+        It will use existing row indices, if any.
 
         :return: Pandas on Spark (PoS) Series
         """
@@ -139,14 +141,14 @@ class FSDataFrame:
         row_index = self.__df.select(self.__row_index_name).collect()
         return Series(label, index=row_index)
 
-    def get_features_indexed(self) -> Series:
+    def get_features_indexed(self) -> pyspark.pandas.series.Series:
         """
         Return features names with indices as a Series.
         :return: Indexed Series.
         """
         return self.__indexed_features
 
-    def get_sample_label_indexed(self) -> Series:
+    def get_sample_label_indexed(self) -> pyspark.pandas.series.Series:
         """
         Return sample labels with indices as a Series.
         :return: Indexed Series.
@@ -163,6 +165,8 @@ class FSDataFrame:
     def get_features_by_index(self, indices: Union[List[int], Set[int]]) -> List[str]:
         """
         Get features names by specified index from DataFrame.
+
+        :param: indices: List of feature indexes
         :return: List of features names
         """
         return self.__indexed_features.loc[indices].tolist()
@@ -170,7 +174,7 @@ class FSDataFrame:
     def get_sample_label(self) -> list:
         """
         Get samples class (label) from DataFrame.
-        :return: Pandas Series
+        :return: List of sample class labels
         """
         return self.__indexed_instances.tolist()
 
@@ -187,6 +191,7 @@ class FSDataFrame:
         Return a Spark dataframe with feature columns assembled into a column vector (a.k.a. Dense Vector column).
         This format is required as input for multiple algorithms from MLlib API.
 
+        :param: output_column_vector: Name of the output column vector.
         :return: Spark DataFrame
         """
 
@@ -241,6 +246,7 @@ class FSDataFrame:
         Add row indices to DataFrame.
         Unique indices of type integer will be added in non-consecutive increasing order.
 
+        :param: index_name: Name of the row index column.
         :return: Spark DataFrame with extra column of row indices.
         """
         return self.__df.withColumn(index_name, monotonically_increasing_id())
@@ -300,9 +306,10 @@ class FSDataFrame:
         """
         Select or drop specified features from DataFrame by its indices.
 
-        :param feature_indices:
-        :param keep:
-        :return:
+        :param feature_indices: Set of features indices to drop or select from DataFrame
+        :param keep: If True (default), keep features. Remove otherwise.
+
+        :return: FSDataFrame
         """
         feature_names = self.get_features_by_index(feature_indices)
         return self.filter_features(feature_names, keep=keep)
@@ -324,8 +331,8 @@ class FSDataFrame:
         """
         Scales features in DataFrame
 
-        :param scaler_method:
-        :return:
+        :param scaler_method: One of: min_max, max_abs, standard or robust.
+        :return: FSDataFrame with scaled features.
         """
 
         if scaler_method == 'min_max':
@@ -374,7 +381,7 @@ class FSDataFrame:
                                Otherwise, it will be considered a continuous variable and binarized.
         :param split_training_factor: Proportion of the training set. Usually, a value between 0.6 and 0.8.
 
-        :return: Tuple of FSDataFrames.
+        :return: Tuple of FSDataFrames. First element is the training set and second element is the testing set.
         """
 
         row_index_col = self.get_row_index_name()
@@ -490,12 +497,12 @@ def _string_indexer(sdf: pyspark.sql.DataFrame,
     Wrapper for `pyspark.ml.feature.StringIndexer`.
     See https://spark.apache.org/docs/latest/api/python/reference/api/pyspark.ml.feature.StringIndexer.html.
 
-    :param sdf:
-    :param input_col:
-    :param output_col:
-    :param drop_input_col:
+    :param sdf: Spark DataFrame.
+    :param input_col: Name of the input column to be indexed.
+    :param output_col: Name of the output column indexed.
+    :param drop_input_col: Drop input column after indexing. Default: False.
 
-    :return:
+    :return: Spark DataFrame
     """
     sdf = (StringIndexer()
            .setInputCol(input_col)
@@ -521,9 +528,9 @@ def _binarizer(sdf: pyspark.sql.DataFrame,
     :param threshold: Threshold used to binarize continuous features.
                       The features greater than the threshold will be binarized to 1.0.
                       The features equal to or less than the threshold will be binarized to 0.0
-    :param drop_input_col:
+    :param drop_input_col: Drop input column after binarizing. Default: False.
 
-    :return:
+    :return: Spark DataFrame
     """
     sdf = (Binarizer()
            .setInputCol(input_col)
@@ -536,4 +543,7 @@ def _binarizer(sdf: pyspark.sql.DataFrame,
 
 
 class DataFormatError(Exception):
+    """
+    Exception raised for errors in the input/output data format.
+    """
     pass
