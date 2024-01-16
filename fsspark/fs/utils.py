@@ -37,7 +37,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     return missing_rates.first().asDict()
 
 
-def filter_missingness_rate(
+def remove_features_by_missingness_rate(
     fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
@@ -45,7 +45,7 @@ def filter_missingness_rate(
 
     :param fsdf: FSDataFrame.
     :param threshold: maximal missingness rate allowed to keep a feature.
-    :return:
+    :return: FSDataFrame with removed features.
     """
     d_rates = compute_missingness_rate(fsdf)
     features_to_remove = [k for k in d_rates.keys() if d_rates.get(k) >= threshold]
