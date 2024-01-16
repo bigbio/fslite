@@ -43,9 +43,9 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
     Compute the correlation matrix (Pearson) among input features and select those below a specified threshold.
 
     :param fsdf: Input FSDataFrame
-    :param strict: If True (default), apply hard filtering (strict) to remove highly related features.
+    :param strict: If True (default), apply hard filtering (strict) to remove highly correlated features.
                    Otherwise, find the maximal independent set of highly correlated features (approximate method).
-                   The approximate method is experimental.
+                   `Warning`: The approximate method is experimental.
     :param corr_threshold: Minimal correlation threshold to consider two features correlated.
     :param method: One of `pearson` (default) or `spearman`.
 

@@ -11,7 +11,7 @@ from fsspark.fs.core import FSDataFrame
 from fsspark.fs.ml import cv_rf_classification, get_accuracy, get_predictions, get_feature_scores
 from fsspark.fs.multivariate import multivariate_filter
 from fsspark.fs.univariate import univariate_filter
-from fsspark.fs.utils import filter_missingness_rate, impute_missing
+from fsspark.fs.utils import remove_features_by_missingness_rate, impute_missing
 from fsspark.utils.datasets import get_tnbc_data_path
 from fsspark.utils.io import import_table_as_psdf
 
@@ -26,7 +26,7 @@ fsdf = FSDataFrame(fsdf, sample_col="Sample", label_col="label")
 # Step 1. Data pre-processing.
 
 # a) Filter missingness rate
-fsdf = filter_missingness_rate(fsdf, threshold=0.1)
+fsdf = remove_features_by_missingness_rate(fsdf, threshold=0.1)
 
 # b) Impute data frame
 fsdf = impute_missing(fsdf)
