@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 from typing import (Union,
                     Optional,
                     List,
@@ -202,6 +203,18 @@ class FSDataFrame:
                                              output_column_vector=output_column_vector)
 
         return sdf_vector
+
+    def _collect_features_as_array(self) -> np.array:
+        """
+        Collect features from FSDataFrame as an array.
+        `Warning`: This method will collect the entire DataFrame into the driver.
+                   Uses this method on small datasets only (e.g., after filtering or splitting the data)
+
+        :return: Numpy array
+        """
+        sdf = self.get_sdf().select(*self.get_features_names())
+        a = np.array(sdf.collect())
+        return a
 
     def to_psdf(self) -> pyspark.pandas.DataFrame:
         """
