@@ -5,15 +5,17 @@ import pyspark.sql.functions as f
 from pyspark.ml.feature import UnivariateFeatureSelector
 
 from fsspark.fs.core import FSDataFrame
+from fsspark.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:UNIVARIATE")
 logger.setLevel(logging.INFO)
 
 
+@tag("spark implementation")
 def compute_univariate_corr(fsdf: FSDataFrame) -> Dict[str, float]:
     """
-    Compute the correlation coefficient between every column (features) in the input DataFrame and a defined target.
+    Compute the correlation coefficient between every column (features) in the input DataFrame and the label (class).
 
     :param fsdf: Input FSDataFrame
 
@@ -32,7 +34,7 @@ def compute_univariate_corr(fsdf: FSDataFrame) -> Dict[str, float]:
 def univariate_correlation_selector(fsdf: FSDataFrame,
                                     corr_threshold: float = 0.3) -> List[str]:
     """
-    Select features based on its correlation with a target label, if corr value is less than a specified threshold.
+    Select features based on its correlation with a label (class), if corr value is less than a specified threshold.
     Expected both features and label to be of type numeric.
 
     :param fsdf: FSDataFrame
@@ -46,6 +48,7 @@ def univariate_correlation_selector(fsdf: FSDataFrame,
     return selected_features
 
 
+@tag("spark implementation")
 def univariate_selector(fsdf: FSDataFrame,
                         label_type: str = 'categorical',
                         **kwargs) -> List[str]:
@@ -63,7 +66,7 @@ def univariate_selector(fsdf: FSDataFrame,
     """
 
     vector_col_name = 'features'
-    vsdf = fsdf.get_sdf_vector(output_column_vector=vector_col_name)
+    sdf = fsdf.get_sdf_vector(output_column_vector=vector_col_name)
     label = fsdf.get_label_col_name()
 
     # set selector
@@ -85,13 +88,14 @@ def univariate_selector(fsdf: FSDataFrame,
      .setLabelCol(label)
      )
 
-    model = selector.fit(vsdf)
+    model = selector.fit(sdf)
     selected_features_indices = model.selectedFeatures
     selected_features = fsdf.get_features_by_index(selected_features_indices)
 
     return selected_features
 
 
+@tag("spark implementation")
 def univariate_filter(fsdf: FSDataFrame,
                       univariate_method: str = 'u_corr',
                       **kwargs) -> FSDataFrame:
@@ -100,7 +104,8 @@ def univariate_filter(fsdf: FSDataFrame,
 
     :param fsdf: Input FSDataFrame
     :param univariate_method: Univariate selector method.
-                              Possible values are 'u_corr', 'anova' or  'f_regression'.
+                              Possible values are 'u_corr', 'anova' (categorical label)
+                              or  'f_regression' (continuous label).
 
     :return: Filtered FSDataFrame
     """

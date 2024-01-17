@@ -8,18 +8,19 @@ from pyspark.ml.stat import Correlation
 
 from fsspark.fs.core import FSDataFrame
 from fsspark.fs.utils import find_maximal_independent_set
+from fsspark.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:MULTIVARIATE")
 logger.setLevel(logging.INFO)
 
 
+@tag("experimental")
 def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
                                 features_col: str = 'features',
                                 method: str = "pearson") -> np.ndarray:
     """
     Compute features Matrix Correlation.
-    TODO: Warning: Computed matrix correlation will collected into the drive with this implementation.
 
     :param sdf: Spark DataFrame
     :param features_col: Name of the feature column vector name.
@@ -27,6 +28,11 @@ def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
 
     :return: Numpy array.
     """
+
+    logger.warning("Warning: Computed matrix correlation will be collected into the drive with this implementation.\n"
+                   "This may cause memory issues. Use it preferably with small datasets.")
+    logger.info(f"Computing correlation matrix using {method} method.")
+
     mcorr = (Correlation
              .corr(sdf, features_col, method)
              .collect()[0][0]
@@ -35,6 +41,7 @@ def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
     return mcorr
 
 
+@tag("experimental")
 def multivariate_correlation_selector(fsdf: FSDataFrame,
                                       strict: bool = True,
                                       corr_threshold: float = 0.75,
@@ -84,6 +91,7 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
     return selected_features
 
 
+@tag("spark implementation")
 def multivariate_variance_selector(fsdf: FSDataFrame,
                                    variance_threshold: float = 0.0) -> List[str]:
     """

@@ -7,12 +7,14 @@ from networkx.algorithms.mis import maximal_independent_set
 from pyspark.ml.feature import Imputer
 
 from fsspark.fs.core import FSDataFrame
+from fsspark.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:UTILS")
 logger.setLevel(logging.INFO)
 
 
+@tag("spark implementation")
 def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     """
     Compute per features missingness rate.
@@ -28,7 +30,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     missing_rates = sdf.select(
         [
             (
-                f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n_instances
+                    f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n_instances
             ).alias(c)
             for c in features
         ]
@@ -38,7 +40,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
 
 
 def remove_features_by_missingness_rate(
-    fsdf: FSDataFrame, threshold: float = 0.15
+        fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
@@ -57,6 +59,7 @@ def remove_features_by_missingness_rate(
     return fsdf_filtered
 
 
+@tag("spark implementation")
 def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
     """
     Impute missing values using the mean, median or mode.
@@ -93,14 +96,16 @@ def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
     )
 
 
+@tag("experimental")
 def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[int]:
     """
     Given a set of indices pairs, returns a random maximal independent set.
 
-    :param pairs:
+    :param pairs: Set of indices pairs.
     :param keep: If true (default), return the maximal independent set.
                  Otherwise, return the remaining indices after removing the maximal independent set.
-    :return:
+
+    :return: Set of indices (maximal independent set or remaining indices).
     """
     logger.warning("This method is experimental and have been not extensively tested...")
 
