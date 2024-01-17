@@ -9,7 +9,7 @@ Here we describe the main data structures used in `fsspark` and how to use them.
 
 The current module support as input data a headed Tab-separated values (TSV) file with `S x 2+F` dimensions, 
 where `S` is the number of samples (rows) and `F` is the number of features (columns). The first column of the file 
-is expected to contain the `sample IDs`, the second column the `response variable` and the remaining
+is expected to contain the `sample IDs`, the second column the `sample label` and the remaining
 columns the `features`. The response variable can be either binary, categorical or continuous; and should
 be encoded as `0` and `1` for binary variables, as integers for categorical variables and as floats
 for continuous variables.
@@ -20,12 +20,12 @@ The following is an example of a TSV file with a binary response variable:
 
 ```
 ------------------------------------------------------------------------
-| sample_id | response | feature_1 | feature_2 | feature_3 | feature_4 |
+| sample_id | label | feature_1 | feature_2 | feature_3 | feature_4 |
 ------------------------------------------------------------------------
-| sample_1  | 0        | 0.1       | 0.2       | 0.3       | 0.4       |
-| sample_2  | 1        | 0.5       | 0.6       | 0.7       | 0.8       |
-| sample_3  | 0        | 0.9       | 0.10      | 0.11      | 0.12      |
-| sample_4  | 1        | 0.13      | 0.14      | 0.15      | 0.16      |
+| sample_1  | a        | 0.1       | 0.2       | 0.3       | 0.4       |
+| sample_2  | b        | 0.5       | 0.6       | 0.7       | 0.8       |
+| sample_3  | b        | 0.9       | 0.10      | 0.11      | 0.12      |
+| sample_4  | c        | 0.13      | 0.14      | 0.15      | 0.16      |
 ------------------------------------------------------------------------
 
 ```
