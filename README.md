@@ -41,4 +41,4 @@ pip install . -r requirements.txt
 
 ### Maintainers
 - Enrique Audain (https://github.com/enriquea)
-- Yasset Perez-Riverol (https://github.com/ypriverol
+- Yasset Perez-Riverol (https://github.com/ypriverol)

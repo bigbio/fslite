@@ -19,10 +19,13 @@ from pyspark.ml.evaluation import (
 )
 from pyspark.ml.regression import RandomForestRegressor, FMRegressor
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel
+from pyspark.pandas import DataFrame
 
 from fsspark.fs.core import FSDataFrame
+from fsspark.utils.generic import tag
 
 
+@tag("spark implementation")
 def cv_rf_classification(
         fsdf: FSDataFrame, binary_classification: bool = True
 ) -> CrossValidatorModel:
@@ -34,7 +37,6 @@ def cv_rf_classification(
                                   Otherwise, implement a multi-class classification problem.
 
     :return: CrossValidatorModel
-             TODO: Consider here if make sense to return the full CV Model.
     """
     features_col = "features"
     sdf = fsdf.get_sdf_vector(output_column_vector=features_col)
@@ -69,6 +71,7 @@ def cv_rf_classification(
     return cv_model
 
 
+@tag("spark implementation")
 def cv_svc_classification(
         fsdf: FSDataFrame,
 ) -> CrossValidatorModel:
@@ -79,7 +82,6 @@ def cv_svc_classification(
     :param fsdf: FSDataFrame
 
     :return: CrossValidatorModel
-             TODO: Consider here if make sense to return the full CV Model.
     """
 
     features_col = "features"
@@ -108,6 +110,7 @@ def cv_svc_classification(
     return cv_model
 
 
+@tag("spark implementation")
 def cv_rf_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
     """
     Cross-validation with Random Forest regressor as estimator.
@@ -116,7 +119,6 @@ def cv_rf_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
     :param fsdf: FSDataFrame
 
     :return: CrossValidatorModel
-             TODO: Consider here if make sense to return the full CV Model.
     """
 
     features_col = "features"
@@ -148,6 +150,7 @@ def cv_rf_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
     return cv_model
 
 
+@tag("spark implementation")
 def cv_fm_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
     """
     Cross-validation with Factorization Machines as estimator.
@@ -156,7 +159,6 @@ def cv_fm_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
     :param fsdf: FSDataFrame
 
     :return: CrossValidatorModel
-              TODO: Do it make sense here to return the full CV Model??
     """
 
     features_col = "features"
@@ -184,12 +186,14 @@ def cv_fm_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
 
 def get_accuracy(model: CrossValidatorModel) -> float:
     """
+    Get accuracy from a trained CrossValidatorModel (best model).
     # TODO: This function should be able to parse all available models.
             Currently only support RandomForestClassificationModel.
 
     :param model: Trained CrossValidatorModel
-    :return: Training accuracy
+    :return: accuracy
     """
+
     best_model = model.bestModel
     if isinstance(best_model, RandomForestClassificationModel):
         acc = best_model.summary.accuracy
@@ -200,7 +204,7 @@ def get_accuracy(model: CrossValidatorModel) -> float:
     return acc
 
 
-def get_predictions(model: CrossValidatorModel) -> pyspark.sql.DataFrame:
+def get_predictions(model: CrossValidatorModel) -> pyspark.pandas.DataFrame:
     """
     # TODO: This function should be able to parse all available models.
             Currently only support RandomForestClassificationModel.
@@ -219,11 +223,11 @@ def get_predictions(model: CrossValidatorModel) -> pyspark.sql.DataFrame:
         )
     else:
         pred = None
-    return pred
+    return pred.pandas_api()
 
 
 def get_feature_scores(model: CrossValidatorModel,
-                       indexed_features: pyspark.pandas.series.Series = None) -> pd.DataFrame:
+                       indexed_features: pyspark.pandas.series.Series = None) -> pyspark.pandas.DataFrame:
     """
     Extract features scores (e.g. importance or coefficients) from a trained CrossValidatorModel.
 
@@ -234,7 +238,7 @@ def get_feature_scores(model: CrossValidatorModel,
     :param indexed_features: If provided, report features names rather than features indices.
                              Usually, the output from `training_data.get_features_indexed()`.
 
-    :return: Pandas on DataFrame with feature importance
+    :return: Pandas DataFrame with feature importance
     """
 
     df_features = (None if indexed_features is None
@@ -279,5 +283,5 @@ def get_feature_scores(model: CrossValidatorModel,
         return df.sort_values(by="coefficients", ascending=False)
 
     else:
-        df = None  # this should follow with parsing options for the different models.
-        return df
+        # TODO: here we should support other models.
+        pass
