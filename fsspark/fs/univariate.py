@@ -4,6 +4,8 @@ from typing import Dict, List
 import pyspark.sql.functions as f
 from pyspark.ml.feature import UnivariateFeatureSelector
 
+from fsspark.fs.constants import ANOVA, UNIVARIATE_CORRELATION, F_REGRESSION, UNIVARIATE_METHODS
+
 from fsspark.fs.core import FSDataFrame
 from fsspark.utils.generic import tag
 
@@ -110,14 +112,15 @@ def univariate_filter(fsdf: FSDataFrame,
     :return: Filtered FSDataFrame
     """
 
-    if univariate_method == 'anova':
+    if univariate_method == ANOVA:
         selected_features = univariate_selector(fsdf, label_type='categorical', **kwargs)
-    elif univariate_method == 'f_regression':
+    elif univariate_method == F_REGRESSION:
         selected_features = univariate_selector(fsdf, label_type='continuous', **kwargs)
-    elif univariate_method == 'u_corr':
+    elif univariate_method == UNIVARIATE_CORRELATION:
         selected_features = univariate_correlation_selector(fsdf, **kwargs)
     else:
-        raise ValueError("`method` must be one of anova, f_regression or u_corr.")
+        raise ValueError(f"Univariate method {univariate_method} not supported. "
+                         f"Expected one of {UNIVARIATE_METHODS.keys()}")
 
     logger.info(f"Applying univariate filter {univariate_method}.")
 
