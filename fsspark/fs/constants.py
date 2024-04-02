@@ -8,9 +8,9 @@ F_REGRESSION = 'f_regression'
 
 # Define dict with univariate feature selection methods and brief description
 UNIVARIATE_METHODS = {
-    ANOVA: 'ANOVA univariate feature selection',
+    ANOVA: 'ANOVA univariate feature selection (F-classification)',
     UNIVARIATE_CORRELATION: 'Univariate Correlation',
-    F_REGRESSION: 'F Classification'
+    F_REGRESSION: 'Univariate F-regression'
 }
 
 # Define multivariate feature selection methods constants
