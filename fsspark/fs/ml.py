@@ -5,283 +5,324 @@ for feature selection (e.g., rank by feature importance) and prediction.
 
 """
 
-import pyspark.sql
-import pyspark.pandas as pd
-from pyspark.ml.classification import (
-    RandomForestClassifier,
-    LinearSVC,
-    RandomForestClassificationModel, LinearSVCModel,
-)
-from pyspark.ml.evaluation import (
-    MulticlassClassificationEvaluator,
-    RegressionEvaluator,
-    BinaryClassificationEvaluator,
-)
-from pyspark.ml.regression import RandomForestRegressor, FMRegressor
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel
-from pyspark.pandas import DataFrame
+from typing import List, Any, Dict, Optional, Union
 
+import pandas as pd
+from pyspark.ml import Estimator, Model
+from pyspark.ml.classification import (RandomForestClassificationModel,
+                                       LinearSVCModel,
+                                       RandomForestClassifier,
+                                       LinearSVC)
+from pyspark.ml.evaluation import (Evaluator,
+                                   BinaryClassificationEvaluator,
+                                   MulticlassClassificationEvaluator,
+                                   RegressionEvaluator)
+from pyspark.ml.regression import RandomForestRegressionModel, RandomForestRegressor
+from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel, Param
+
+from fsspark.fs.constants import RF_BINARY, RF_MULTILABEL, RF_REGRESSION, LSVC_BINARY, ML_METHODS
 from fsspark.fs.core import FSDataFrame
-from fsspark.utils.generic import tag
+
+ESTIMATORS_CLASSES = [RandomForestClassifier, RandomForestRegressionModel, LinearSVC]
+EVALUATORS_CLASSES = [BinaryClassificationEvaluator, MulticlassClassificationEvaluator, RegressionEvaluator]
 
 
-@tag("spark implementation")
-def cv_rf_classification(
-        fsdf: FSDataFrame, binary_classification: bool = True
-) -> CrossValidatorModel:
+# Define an abstract class that allow to create a factory of models
+# with the same interface
+# This class allows to perform the following operations:
+# - Define an Estimator
+# - Define an Evaluator
+# - Define a grid of parameters (model tuning)
+# - Define a cross-validator (model fitting)
+class MLCVModel:
     """
-    Cross-validation with Random Forest classifier as estimator.
-
-    :param fsdf: FSDataFrame
-    :param binary_classification: If true (default), current problem is considered of type binary classification.
-                                  Otherwise, implement a multi-class classification problem.
-
-    :return: CrossValidatorModel
-    """
-    features_col = "features"
-    sdf = fsdf.get_sdf_vector(output_column_vector=features_col)
-    label_col = fsdf.get_label_col_name()
-
-    # set the estimator (a.k.a. the ML algorithm)
-    rf = RandomForestClassifier(
-        featuresCol=features_col,
-        labelCol=label_col,
-        numTrees=3,
-        maxDepth=2,
-        seed=42,
-        leafCol="leafId",
-    )
-    grid = ParamGridBuilder().addGrid(rf.maxDepth, [2, 3]).build()
-
-    # set the evaluator.
-    if binary_classification:
-        evaluator = BinaryClassificationEvaluator()
-    else:
-        evaluator = MulticlassClassificationEvaluator()
-
-    cv = CrossValidator(
-        estimator=rf,
-        estimatorParamMaps=grid,
-        evaluator=evaluator,
-        parallelism=2,
-        numFolds=3,
-        collectSubModels=False,
-    )
-    cv_model = cv.fit(sdf)
-    return cv_model
-
-
-@tag("spark implementation")
-def cv_svc_classification(
-        fsdf: FSDataFrame,
-) -> CrossValidatorModel:
-    """
-    Cross-validation with Linear Support Vector classifier as estimator.
-    Support only binary classification.
-
-    :param fsdf: FSDataFrame
-
-    :return: CrossValidatorModel
+    A factory class for creating various machine learning models with Spark MLlib.
+    ML model are created using a cross-validator approach for hyperparameter tuning.
     """
 
-    features_col = "features"
-    sdf = fsdf.get_sdf_vector(output_column_vector=features_col)
-    label_col = fsdf.get_label_col_name()
+    _cross_validator: CrossValidator = None
+    _fitted_cv_model: CrossValidatorModel = None
+    _best_model: Model = None
+    _fsdf: FSDataFrame = None
 
-    # set the estimator (a.k.a. the ML algorithm)
-    svm = LinearSVC(
-        featuresCol=features_col, labelCol=label_col, maxIter=10, regParam=0.1
-    )
+    def __init__(self,
+                 estimator:  Union[RandomForestClassifier |
+                                   RandomForestRegressionModel |
+                                   LinearSVC],
+                 evaluator: Union[BinaryClassificationEvaluator |
+                                  MulticlassClassificationEvaluator |
+                                  RegressionEvaluator],
+                 estimator_params: Optional[Dict[str, Any]] = None,
+                 grid_params: Optional[Dict[str, List[Any]]] = None,
+                 cv_params: Optional[Dict[str, Any]] = None):
+        """
+        Initializes the MLModel with optional estimator, evaluator, and parameter specifications.
+        """
+        self.estimator = estimator
+        self.evaluator = evaluator
+        self.estimator_params = estimator_params
+        self.grid_params = grid_params
+        self.cv_params = cv_params
 
-    grid = ParamGridBuilder().addGrid(svm.maxIter, [10]).build()
+        self._initialize_model()
 
-    # set the evaluator.
-    evaluator = BinaryClassificationEvaluator()
+    def _initialize_model(self):
+        # Validate and set estimator parameters
+        if self.estimator:
+            self._validate_estimator(self.estimator)
+            self._validate_estimator_params(self.estimator_params)
+            self._set_estimator_params()
 
-    cv = CrossValidator(
-        estimator=svm,
-        estimatorParamMaps=grid,
-        evaluator=evaluator,
-        parallelism=2,
-        numFolds=3,
-        collectSubModels=False,
-    )
-    cv_model = cv.fit(sdf)
-    return cv_model
+        # Validate and evaluator
+        if self.evaluator:
+            self._validate_evaluator(self.evaluator)
 
+        # Parse and set grid parameters
+        if self.grid_params:
+            self.grid_params = self._parse_grid_params(self.grid_params)
 
-@tag("spark implementation")
-def cv_rf_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
-    """
-    Cross-validation with Random Forest regressor as estimator.
-    Optimised for regression problems.
+        # Initialize and set cross-validator parameters
+        self._set_cross_validator()
 
-    :param fsdf: FSDataFrame
+    def _parse_grid_params(self, grid_params: Dict[str, List[Any]]) -> List[Dict[Param, Any]]:
+        """
+        Parse the grid parameters to create a list of dictionaries.
 
-    :return: CrossValidatorModel
-    """
+        :param grid_params: A dictionary containing the parameter names as keys and a list of values as values.
+        :return: A list of dictionaries, where each dictionary represents a set of parameter values.
+        """
+        grid = ParamGridBuilder()
+        for param, values in grid_params.items():
+            if hasattr(self.estimator, param):
+                grid = grid.addGrid(getattr(self.estimator, param), values)
+            else:
+                raise AttributeError(f"{self.estimator.__class__.__name__} does not have attribute {param}")
+        return grid.build()
 
-    features_col = "features"
-    sdf = fsdf.get_sdf_vector(output_column_vector=features_col)
-    label_col = fsdf.get_label_col_name()
+    def _validate_estimator(self, estimator: Estimator) -> 'MLCVModel':
+        """
+        Validate the estimator.
 
-    rf = RandomForestRegressor(
-        featuresCol=features_col,
-        labelCol=label_col,
-        numTrees=3,
-        maxDepth=2,
-        seed=42,
-        leafCol="leafId",
-    )
-    grid = ParamGridBuilder().addGrid(rf.maxDepth, [2, 3]).build()
+        :param estimator: The estimator to validate.
+        :return: The validated estimator.
+        """
+        # check estimator is an instance of ESTIMATORS_CLASSES
+        if not isinstance(estimator, tuple(ESTIMATORS_CLASSES)):
+            raise ValueError(f"Estimator must be an instance of {ESTIMATORS_CLASSES}")
+        return self
 
-    # set the evaluator.
-    evaluator = RegressionEvaluator()
+    def _validate_evaluator(self, evaluator: Evaluator) -> 'MLCVModel':
+        """
+        Validate the evaluator.
 
-    cv = CrossValidator(
-        estimator=rf,
-        estimatorParamMaps=grid,
-        evaluator=evaluator,
-        parallelism=2,
-        numFolds=3,
-        collectSubModels=False,
-    )
-    cv_model = cv.fit(sdf)
-    return cv_model
+        :param evaluator: The evaluator to validate.
+        :return: The validated evaluator.
+        """
+        # check evaluator is an instance of EVALUATORS_CLASSES
+        if not isinstance(evaluator, tuple(EVALUATORS_CLASSES)):
+            raise ValueError(f"Evaluator must be an instance of {EVALUATORS_CLASSES}")
+        return self
 
+    def _validate_estimator_params(self, estimator_params: Dict[str, Any]) -> 'MLCVModel':
+        """
+        Validate the estimator parameters.
 
-@tag("spark implementation")
-def cv_fm_regression(fsdf: FSDataFrame) -> CrossValidatorModel:
-    """
-    Cross-validation with Factorization Machines as estimator.
-    Optimised for regression problems.
+        :param estimator_params: A dictionary containing the parameter names as keys and values as values.
+        """
+        for param, _ in estimator_params.items():
+            if self.estimator.hasParam(param):
+                pass
+            else:
+                raise AttributeError(f"{self.estimator.__class__.__name__} does not have attribute {param}")
+        return self
 
-    :param fsdf: FSDataFrame
+    def _set_estimator_params(self) -> 'MLCVModel':
+        """
+        Set estimator parameters.
+        """
+        self.estimator = self.estimator.setParams(**self.estimator_params)
+        return self
 
-    :return: CrossValidatorModel
-    """
+    def _set_cv_params(self, cv_params: Dict[str, Any]) -> 'MLCVModel':
+        """
+        Parse the cross-validator parameters to create an instance of CrossValidator.
 
-    features_col = "features"
-    sdf = fsdf.get_sdf_vector(output_column_vector=features_col)
-    label_col = fsdf.get_label_col_name()
+        :param cv_params: A dictionary containing the parameter names as keys and values as values.
+        :return: An instance of CrossValidator.
+        """
 
-    fmr = FMRegressor(featuresCol=features_col, labelCol=label_col)
+        for param, value in cv_params.items():
+            if hasattr(self._cross_validator, param):
+                setattr(self._cross_validator, param, value)
+            else:
+                raise AttributeError(f"{self._cross_validator.__class__.__name__} does not have attribute {param}")
+        return self
 
-    grid = ParamGridBuilder().addGrid(fmr.factorSize, [4, 8]).build()
+    def _set_cross_validator(self) -> 'MLCVModel':
+        """
+        Build the model using the cross-validator.
 
-    # set the evaluator.
-    evaluator = RegressionEvaluator()
+        :return: The CrossValidator model.
+        """
+        try:
+            self._cross_validator = CrossValidator(
+                estimator=self.estimator,
+                estimatorParamMaps=self.grid_params,
+                evaluator=self.evaluator,
+            ).setParams(**self.cv_params)
+            return self
+        except Exception as e:
+            print(f"An error occurred while creating the CrossValidator: {str(e)}")
+            # Handle the exception or raise it to be handled by the caller
+            raise
 
-    cv = CrossValidator(
-        estimator=fmr,
-        estimatorParamMaps=grid,
-        evaluator=evaluator,
-        parallelism=2,
-        numFolds=3,
-        collectSubModels=False,
-    )
-    cv_model = cv.fit(sdf)
-    return cv_model
+    def fit(self, fsdf: FSDataFrame) -> 'MLCVModel':
+        """
+        Fit the model using the cross-validator.
 
+        :return: The CrossValidatorModel after fitting.
+        """
+        # Extract the Spark DataFrame and label column name from FSDataFrame
+        self._fsdf = fsdf
 
-def get_accuracy(model: CrossValidatorModel) -> float:
-    """
-    Get accuracy from a trained CrossValidatorModel (best model).
-    # TODO: This function should be able to parse all available models.
-            Currently only support RandomForestClassificationModel.
+        if self._cross_validator is None or self.estimator is None or self.evaluator is None:
+            raise ValueError("Cross-validator, estimator, or evaluator not set properly.")
 
-    :param model: Trained CrossValidatorModel
-    :return: accuracy
-    """
+        self._fitted_cv_model = self._cross_validator.fit(self._fsdf.get_sdf_vector())
+        return self
 
-    best_model = model.bestModel
-    if isinstance(best_model, RandomForestClassificationModel):
-        acc = best_model.summary.accuracy
-    elif isinstance(best_model, LinearSVCModel):
-        acc = best_model.summary().accuracy
-    else:
-        acc = None
-    return acc
+    def _get_best_model(self) -> Model:
+        """
+        Get the best model from the fitted CrossValidatorModel.
 
+        :return: The best model.
+        """
+        if self._fitted_cv_model is None:
+            raise ValueError("CrossValidatorModel not fitted. Use fit() to fit the model.")
+        self._best_model = self._fitted_cv_model.bestModel
+        return self._best_model
 
-def get_predictions(model: CrossValidatorModel) -> pyspark.pandas.DataFrame:
-    """
-    # TODO: This function should be able to parse all available models.
-            Currently only support RandomForestClassificationModel.
+    # define a static method that allows to set a ml model based on the model type
+    @staticmethod
+    def create_model(model_type: str,
+                     estimator_params: Dict[str, Any] = None,
+                     grid_params: Dict[str, List[Any]] = None,
+                     cv_params: Dict[str, Any] = None) -> 'MLCVModel':
+        """
+        Set a machine learning model based on the model type.
 
-    :param model: Trained CrossValidatorModel
+        :param estimator_params:
+        :param cv_params:
+        :param model_type: The type of model to set.
+        :param grid_params: A dictionary containing the parameter names as keys and a list of values as values.
 
-    :return: DataFrame with sample label predictions
-    """
-    best_model = model.bestModel
-    if isinstance(best_model, RandomForestClassificationModel):
-        pred = best_model.summary.predictions.drop(
-            best_model.getFeaturesCol(),
-            best_model.getLeafCol(),
-            best_model.getRawPredictionCol(),
-            best_model.getProbabilityCol(),
+        :return: An instance of MLModel.
+        """
+        if model_type == RF_BINARY:
+            estimator = RandomForestClassifier()
+            evaluator = BinaryClassificationEvaluator()
+        elif model_type == RF_MULTILABEL:
+            estimator = RandomForestClassifier()
+            evaluator = MulticlassClassificationEvaluator()
+        elif model_type == RF_REGRESSION:
+            estimator = RandomForestRegressor()
+            evaluator = RegressionEvaluator()
+        elif model_type == LSVC_BINARY:
+            estimator = LinearSVC()
+            evaluator = BinaryClassificationEvaluator()
+        else:
+            raise ValueError(f"Unsupported model type: {model_type}."
+                             f"Supported model types are: {list(ML_METHODS.keys())}")
+
+        ml_method = MLCVModel(
+            estimator=estimator,
+            evaluator=evaluator,
+            estimator_params=estimator_params,
+            grid_params=grid_params,
+            cv_params=cv_params
         )
-    else:
-        pred = None
-    return pred.pandas_api()
 
+        return ml_method
 
-def get_feature_scores(model: CrossValidatorModel,
-                       indexed_features: pyspark.pandas.series.Series = None) -> pyspark.pandas.DataFrame:
-    """
-    Extract features scores (e.g. importance or coefficients) from a trained CrossValidatorModel.
+    def get_feature_scores(self) -> pd.DataFrame:
 
-    # TODO: This function should be able to parse all available models.
-            Currently only support RandomForestClassificationModel and LinearSVCModel.
+        # TODO: This function should be able to parse all available models.
 
-    :param model: Trained CrossValidatorModel
-    :param indexed_features: If provided, report features names rather than features indices.
-                             Usually, the output from `training_data.get_features_indexed()`.
+        indexed_features = self._fsdf.get_features_indexed()
+        best_model = self._get_best_model()
 
-    :return: Pandas DataFrame with feature importance
-    """
+        # raise exception if the model is not none
+        if best_model is None:
+            raise ValueError("No ML model have been fitted. Use fit() to fit the model.")
 
-    df_features = (None if indexed_features is None
-                   else indexed_features.to_dataframe(name='features')
-                   )
+        df_features = pd.DataFrame(indexed_features.to_numpy(),
+                                   columns=["features"])
 
-    best_model = model.bestModel
+        if (isinstance(best_model, RandomForestClassificationModel)
+                or isinstance(best_model, RandomForestRegressionModel)):
 
-    if isinstance(best_model, RandomForestClassificationModel):
+            df_scores = pd.DataFrame(
+                data=best_model.featureImportances.toArray(),
+                columns=["scores"]
+            )
 
-        importance = pd.DataFrame(data=best_model.featureImportances.toArray(),
-                                  columns=['importance'])
+            df_scores = df_scores.reset_index(level=0).rename(columns={"index": "feature_index"})
 
-        df = (importance
-              .reset_index(level=0)
-              .rename(columns={"index": "feature_index"})
-              )
+            # merge the feature scores with the feature names
+            df = df_features.merge(
+                df_scores, how="right", left_index=True, right_index=True
+            )  # index-to-index merging
 
-        if df_features is not None:
-            # if available, get feature names rather than reporting feature index.
-            df = (df_features
-                  .merge(importance, how='right', left_index=True, right_index=True)  # index-to-index merging
-                  )
+            # sort the dataframe by scores in descending order
+            df = df.sort_values(by="scores", ascending=False)
 
-        return df.sort_values(by="importance", ascending=False)
+            # add feature percentile rank to the features_scores dataframe
+            df['percentile_rank'] = df['scores'].rank(pct=True)
 
-    elif isinstance(best_model, LinearSVCModel):
+            return df
 
-        coefficients = pd.DataFrame(data=best_model.coefficients,
-                                    columns=['coefficients'])
+        else:
+            raise ValueError("Unsupported model type. "
+                             "Only RandomForestClassificationModel, "
+                             "RandomForestRegressionModel, and LinearSVCModel are supported.")
 
-        df = (coefficients
-              .reset_index(level=0)
-              .rename(columns={"index": "feature_index"})
-              )
+    def get_accuracy(self) -> float:
+        """
+        Get accuracy from a trained CrossValidatorModel (best model).
+        # TODO: This function should be able to parse all available models.
 
-        if indexed_features is not None:
-            df = (df_features
-                  .merge(coefficients, how='right', left_index=True, right_index=True)  # index-to-index merging
-                  )
+        :return: accuracy
+        """
 
-        return df.sort_values(by="coefficients", ascending=False)
+        # get the best model from the fitted cross-validator model
+        best_model = self._get_best_model()
 
-    else:
-        # TODO: here we should support other models.
-        pass
+        if isinstance(best_model, RandomForestClassificationModel):
+            acc = best_model.summary.accuracy
+        elif isinstance(best_model, LinearSVCModel):
+            acc = best_model.summary().accuracy
+        else:
+            acc = None
+        return acc
+
+    def get_accuracy_on_test_data(self, test_data: FSDataFrame) -> float:
+        """
+        Get accuracy on test data from a trained CrossValidatorModel (best model).
+
+        :param test_data: The test data as a FSDataFrame object.
+        :return: accuracy
+        """
+
+        # TODO: This function should be able to parse all available models.
+
+        # get the best model from the fitted cross-validator model
+        best_model = self._get_best_model()
+
+        # predict the test data
+        predictions = best_model.transform(test_data.get_sdf_vector())
+
+        if isinstance(best_model, RandomForestClassificationModel):
+            acc = self.evaluator.evaluate(predictions)
+        else:
+            acc = None
+        return acc
