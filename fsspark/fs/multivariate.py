@@ -18,23 +18,23 @@ logger.setLevel(logging.INFO)
 @tag("experimental")
 def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
                                 features_col: str = 'features',
-                                method: str = "pearson") -> np.ndarray:
+                                corr_method: str = "pearson") -> np.ndarray:
     """
     Compute features Matrix Correlation.
 
     :param sdf: Spark DataFrame
     :param features_col: Name of the feature column vector name.
-    :param method: One of `pearson` (default) or `spearman`.
+    :param corr_method: One of `pearson` (default) or `spearman`.
 
     :return: Numpy array.
     """
 
     logger.warning("Warning: Computed matrix correlation will be collected into the drive with this implementation.\n"
                    "This may cause memory issues. Use it preferably with small datasets.")
-    logger.info(f"Computing correlation matrix using {method} method.")
+    logger.info(f"Computing correlation matrix using {corr_method} method.")
 
     mcorr = (Correlation
-             .corr(sdf, features_col, method)
+             .corr(sdf, features_col, corr_method)
              .collect()[0][0]
              .toArray()
              )
@@ -45,7 +45,7 @@ def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
 def multivariate_correlation_selector(fsdf: FSDataFrame,
                                       strict: bool = True,
                                       corr_threshold: float = 0.75,
-                                      method: str = "pearson") -> List[str]:
+                                      corr_method: str = "pearson") -> List[str]:
     """
     Compute the correlation matrix (Pearson) among input features and select those below a specified threshold.
 
@@ -54,7 +54,7 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
                    Otherwise, find the maximal independent set of highly correlated features (approximate method).
                    `Warning`: The approximate method is experimental.
     :param corr_threshold: Minimal correlation threshold to consider two features correlated.
-    :param method: One of `pearson` (default) or `spearman`.
+    :param corr_method: One of `pearson` (default) or `spearman`.
 
     :return: List of selected features names
     """
@@ -65,7 +65,7 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
     # compute correlation matrix
     mcorr = _compute_correlation_matrix(sdf,
                                         features_col=colum_vector_features,
-                                        method=method)
+                                        corr_method=corr_method)
 
     mcorr = np.abs(mcorr)  # get absolute correlation value
     combs_above_cutoff = np.triu(mcorr, k=1) > corr_threshold  # create bool matrix that meet criteria
