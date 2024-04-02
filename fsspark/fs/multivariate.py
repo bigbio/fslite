@@ -6,6 +6,8 @@ import pyspark
 from pyspark.ml.feature import (VarianceThresholdSelector)
 from pyspark.ml.stat import Correlation
 
+from fsspark.fs.constants import MULTIVARIATE_METHODS, MULTIVARIATE_CORRELATION, MULTIVARIATE_VARIANCE
+
 from fsspark.fs.core import FSDataFrame
 from fsspark.fs.utils import find_maximal_independent_set
 from fsspark.utils.generic import tag
@@ -132,12 +134,13 @@ def multivariate_filter(fsdf: FSDataFrame,
 
     :return: Filtered FSDataFrame
     """
-    if multivariate_method == 'm_corr':
+    if multivariate_method == MULTIVARIATE_CORRELATION:
         selected_features = multivariate_correlation_selector(fsdf, **kwargs)
-    elif multivariate_method == 'variance':
+    elif multivariate_method == MULTIVARIATE_VARIANCE:
         selected_features = multivariate_variance_selector(fsdf, **kwargs)
     else:
-        raise ValueError("`method` must be one of m_corr or variance.")
+        raise ValueError(f"Invalid multivariate method: {multivariate_method}. "
+                         f"Choose one of {MULTIVARIATE_METHODS.keys()}.")
 
     logger.info(f"Applying multivariate filter {multivariate_method}.")
 
