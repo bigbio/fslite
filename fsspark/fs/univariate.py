@@ -53,6 +53,8 @@ def univariate_correlation_selector(fsdf: FSDataFrame,
 @tag("spark implementation")
 def univariate_selector(fsdf: FSDataFrame,
                         label_type: str = 'categorical',
+                        selection_mode: str = 'percentile',
+                        selection_threshold: float = 0.8,
                         **kwargs) -> List[str]:
     """
     Wrapper for `UnivariateFeatureSelector`.
@@ -63,6 +65,8 @@ def univariate_selector(fsdf: FSDataFrame,
 
     :param fsdf: Input FSDataFrame
     :param label_type: Type of label. Possible values are 'categorical' or 'continuous'.
+    :param selection_mode: Mode for feature selection. Possible values are 'numTopFeatures' or 'percentile'.
+    :param selection_threshold: Number of features to select or the percentage of features to select.
 
     :return: List of selected features names
     """
@@ -88,6 +92,8 @@ def univariate_selector(fsdf: FSDataFrame,
      .setFeatureType("continuous")
      .setOutputCol("selectedFeatures")
      .setLabelCol(label)
+     .setSelectionMode(selection_mode)
+     .setSelectionThreshold(selection_threshold)
      )
 
     model = selector.fit(sdf)
