@@ -4,7 +4,7 @@ A set of pre-defined ML algorithms wrapped with cross-validation approach
 for feature selection (e.g., rank by feature importance) and prediction.
 
 """
-
+import warnings
 from typing import List, Any, Dict, Optional, Union
 
 import pandas as pd
@@ -12,7 +12,7 @@ from pyspark.ml import Estimator, Model
 from pyspark.ml.classification import (RandomForestClassificationModel,
                                        LinearSVCModel,
                                        RandomForestClassifier,
-                                       LinearSVC)
+                                       LinearSVC, LogisticRegression, LogisticRegressionModel)
 from pyspark.ml.evaluation import (Evaluator,
                                    BinaryClassificationEvaluator,
                                    MulticlassClassificationEvaluator,
@@ -20,10 +20,17 @@ from pyspark.ml.evaluation import (Evaluator,
 from pyspark.ml.regression import RandomForestRegressionModel, RandomForestRegressor
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel, Param
 
-from fsspark.fs.constants import RF_BINARY, RF_MULTILABEL, RF_REGRESSION, LSVC_BINARY, ML_METHODS
+from fsspark.fs.constants import (RF_BINARY,
+                                  LSVC_BINARY,
+                                  FM_BINARY,
+                                  RF_MULTILABEL,
+                                  LR_MULTILABEL,
+                                  RF_REGRESSION,
+                                  FM_REGRESSION,
+                                  ML_METHODS)
 from fsspark.fs.core import FSDataFrame
 
-ESTIMATORS_CLASSES = [RandomForestClassifier, RandomForestRegressionModel, LinearSVC]
+ESTIMATORS_CLASSES = [RandomForestClassifier, RandomForestRegressionModel, LinearSVC, LogisticRegression]
 EVALUATORS_CLASSES = [BinaryClassificationEvaluator, MulticlassClassificationEvaluator, RegressionEvaluator]
 
 
@@ -46,13 +53,15 @@ class MLCVModel:
     _fsdf: FSDataFrame = None
 
     def __init__(self,
-                 estimator:  Union[RandomForestClassifier |
-                                   RandomForestRegressionModel |
-                                   LinearSVC],
+                 estimator: Union[RandomForestClassifier |
+                                  RandomForestRegressionModel |
+                                  LinearSVC |
+                                  LogisticRegression],
                  evaluator: Union[BinaryClassificationEvaluator |
                                   MulticlassClassificationEvaluator |
                                   RegressionEvaluator],
                  estimator_params: Optional[Dict[str, Any]] = None,
+                 evaluator_params: Optional[Dict[str, Any]] = None,
                  grid_params: Optional[Dict[str, List[Any]]] = None,
                  cv_params: Optional[Dict[str, Any]] = None):
         """
@@ -61,6 +70,7 @@ class MLCVModel:
         self.estimator = estimator
         self.evaluator = evaluator
         self.estimator_params = estimator_params
+        self.evaluator_params = evaluator_params
         self.grid_params = grid_params
         self.cv_params = cv_params
 
@@ -76,6 +86,8 @@ class MLCVModel:
         # Validate and evaluator
         if self.evaluator:
             self._validate_evaluator(self.evaluator)
+            self._validate_evaluator_params(self.evaluator_params)
+            self._set_evaluator_params()
 
         # Parse and set grid parameters
         if self.grid_params:
@@ -123,24 +135,44 @@ class MLCVModel:
             raise ValueError(f"Evaluator must be an instance of {EVALUATORS_CLASSES}")
         return self
 
-    def _validate_estimator_params(self, estimator_params: Dict[str, Any]) -> 'MLCVModel':
+    def _validate_estimator_params(self, estimator_params: Dict[str, Any]) -> None:
         """
         Validate the estimator parameters.
 
         :param estimator_params: A dictionary containing the parameter names as keys and values as values.
         """
+        if estimator_params is None:
+            return
         for param, _ in estimator_params.items():
-            if self.estimator.hasParam(param):
-                pass
-            else:
+            if not self.estimator.hasParam(param):
                 raise AttributeError(f"{self.estimator.__class__.__name__} does not have attribute {param}")
+
+    def _validate_evaluator_params(self, evaluator_params: Dict[str, Any]) -> None:
+        """
+        Validate the evaluator parameters.
+
+        :param evaluator_params: A dictionary containing the parameter names as keys and values as values.
+        """
+        if evaluator_params is None:
+            return
+        for param, _ in evaluator_params.items():
+            if not self.evaluator.hasParam(param):
+                raise AttributeError(f"{self.evaluator.__class__.__name__} does not have attribute {param}")
+
+    def _set_evaluator_params(self) -> 'MLCVModel':
+        """
+        Set evaluator parameters.
+        """
+        if self.evaluator_params is not None:
+            self.evaluator = self.evaluator.setParams(**self.evaluator_params)
         return self
 
     def _set_estimator_params(self) -> 'MLCVModel':
         """
         Set estimator parameters.
         """
-        self.estimator = self.estimator.setParams(**self.estimator_params)
+        if self.estimator_params is not None:
+            self.estimator = self.estimator.setParams(**self.estimator_params)
         return self
 
     def _set_cv_params(self, cv_params: Dict[str, Any]) -> 'MLCVModel':
@@ -169,7 +201,9 @@ class MLCVModel:
                 estimator=self.estimator,
                 estimatorParamMaps=self.grid_params,
                 evaluator=self.evaluator,
-            ).setParams(**self.cv_params)
+            )
+            if self.cv_params is not None:
+                self._cross_validator = self._cross_validator.setParams(**self.cv_params)
             return self
         except Exception as e:
             print(f"An error occurred while creating the CrossValidator: {str(e)}")
@@ -206,30 +240,35 @@ class MLCVModel:
     @staticmethod
     def create_model(model_type: str,
                      estimator_params: Dict[str, Any] = None,
+                     evaluator_params: Dict[str, Any] = None,
                      grid_params: Dict[str, List[Any]] = None,
                      cv_params: Dict[str, Any] = None) -> 'MLCVModel':
         """
         Set a machine learning model based on the model type.
 
-        :param estimator_params:
-        :param cv_params:
         :param model_type: The type of model to set.
+        :param estimator_params: Parameters for the estimator.
+        :param evaluator_params: Parameters for the evaluator.
         :param grid_params: A dictionary containing the parameter names as keys and a list of values as values.
+        :param cv_params: Parameters for the cross-validator.
 
         :return: An instance of MLModel.
         """
         if model_type == RF_BINARY:
             estimator = RandomForestClassifier()
             evaluator = BinaryClassificationEvaluator()
+        elif model_type == LSVC_BINARY:
+            estimator = LinearSVC()
+            evaluator = BinaryClassificationEvaluator()
         elif model_type == RF_MULTILABEL:
             estimator = RandomForestClassifier()
+            evaluator = MulticlassClassificationEvaluator()
+        elif model_type == LR_MULTILABEL:
+            estimator = LogisticRegression()
             evaluator = MulticlassClassificationEvaluator()
         elif model_type == RF_REGRESSION:
             estimator = RandomForestRegressor()
             evaluator = RegressionEvaluator()
-        elif model_type == LSVC_BINARY:
-            estimator = LinearSVC()
-            evaluator = BinaryClassificationEvaluator()
         else:
             raise ValueError(f"Unsupported model type: {model_type}."
                              f"Supported model types are: {list(ML_METHODS.keys())}")
@@ -238,11 +277,20 @@ class MLCVModel:
             estimator=estimator,
             evaluator=evaluator,
             estimator_params=estimator_params,
+            evaluator_params=evaluator_params,
             grid_params=grid_params,
             cv_params=cv_params
         )
 
         return ml_method
+
+    def get_eval_metric_name(self) -> str:
+        """
+        Get the evaluation metric name.
+
+        :return: The evaluation metric name.
+        """
+        return self.evaluator.getMetricName()
 
     def get_feature_scores(self) -> pd.DataFrame:
 
@@ -258,9 +306,7 @@ class MLCVModel:
         df_features = pd.DataFrame(indexed_features.to_numpy(),
                                    columns=["features"])
 
-        if (isinstance(best_model, RandomForestClassificationModel)
-                or isinstance(best_model, RandomForestRegressionModel)):
-
+        if isinstance(best_model, (RandomForestClassificationModel, RandomForestRegressionModel)):
             df_scores = pd.DataFrame(
                 data=best_model.featureImportances.toArray(),
                 columns=["scores"]
@@ -286,26 +332,34 @@ class MLCVModel:
                              "Only RandomForestClassificationModel, "
                              "RandomForestRegressionModel, and LinearSVCModel are supported.")
 
-    def get_accuracy(self) -> float:
+    def get_eval_metric_on_training(self) -> float:
         """
-        Get accuracy from a trained CrossValidatorModel (best model).
-        # TODO: This function should be able to parse all available models.
+        Get the evaluation metric on training data from a trained CrossValidatorModel (best model).
 
-        :return: accuracy
+        :return: A dictionary containing the evaluation metric name and value.
         """
+
+        # TODO: This function should be able to parse all available models.
 
         # get the best model from the fitted cross-validator model
         best_model = self._get_best_model()
 
-        if isinstance(best_model, RandomForestClassificationModel):
-            acc = best_model.summary.accuracy
-        elif isinstance(best_model, LinearSVCModel):
-            acc = best_model.summary().accuracy
-        else:
-            acc = None
-        return acc
+        # get the eval metric name from the evaluator
+        eval_metric_name = self.get_eval_metric_name()
 
-    def get_accuracy_on_test_data(self, test_data: FSDataFrame) -> float:
+        if isinstance(best_model, (RandomForestClassificationModel, LogisticRegressionModel)):
+            metric_value = getattr(best_model.summary, eval_metric_name)
+
+        elif isinstance(best_model, LinearSVCModel):
+            metric_value = getattr(best_model.summary(), eval_metric_name)
+
+        else:
+            warnings.warn("Unsupported model type. Unable to get evaluation metric.")
+            metric_value = None
+
+        return metric_value
+
+    def get_eval_metric_on_testing(self, test_data: FSDataFrame) -> float:
         """
         Get accuracy on test data from a trained CrossValidatorModel (best model).
 
@@ -318,11 +372,17 @@ class MLCVModel:
         # get the best model from the fitted cross-validator model
         best_model = self._get_best_model()
 
-        # predict the test data
-        predictions = best_model.transform(test_data.get_sdf_vector())
+        # get test data features harmonized with training features
+        training_features = self._fsdf.get_features_names()
+        test_data = test_data.filter_features(training_features, keep=True)
 
-        if isinstance(best_model, RandomForestClassificationModel):
-            acc = self.evaluator.evaluate(predictions)
-        else:
-            acc = None
-        return acc
+        # predict the test data
+        predictions = None
+        if isinstance(best_model, (RandomForestClassificationModel, LinearSVCModel, LogisticRegressionModel)):
+            predictions = best_model.transform(test_data.get_sdf_vector())
+
+        metric_value = None
+        if predictions is not None:
+            metric_value = self.evaluator.evaluate(predictions)
+
+        return metric_value
