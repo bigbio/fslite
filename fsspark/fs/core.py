@@ -179,14 +179,6 @@ class FSDataFrame:
         """
         return self.__indexed_instances.tolist()
 
-    # def get_samples(self) -> pyspark.pandas.Series:
-    #     """
-    #     Get samples identifiers from DataFrame. Coerce data type to string.
-    #
-    #     :return: Pandas Series
-    #     """
-    #     return self.__df[self.__sample_col].astype("str")
-
     def get_sdf_vector(self, output_column_vector: str = 'features') -> pyspark.sql.DataFrame:
         """
         Return a Spark dataframe with feature columns assembled into a column vector (a.k.a. Dense Vector column).
@@ -203,6 +195,18 @@ class FSDataFrame:
                                              output_column_vector=output_column_vector)
 
         return sdf_vector
+
+    def get_sdf_and_label(self,
+                          output_column_vector: str = 'features') -> Tuple[pyspark.sql.dataframe.DataFrame, str, str]:
+        """
+        Extracts the Spark DataFrame and label column name from FSDataFrame.
+
+        :param: output_column_vector: Name of the output column vector.
+        :return: A tuple containing the Spark DataFrame and the label column name.
+        """
+        sdf = self.get_sdf_vector(output_column_vector=output_column_vector)
+        label_col = self.get_label_col_name()
+        return sdf, label_col, output_column_vector
 
     def _collect_features_as_array(self) -> np.array:
         """

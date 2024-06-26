@@ -6,12 +6,14 @@ from fsspark.config.global_settings import (SPARK_EXTRA_SETTINGS,
                                             PYARROW_SETTINGS,
                                             PANDAS_ON_SPARK_API_SETTINGS)
 
-
 os.environ['PYARROW_IGNORE_TIMEZONE'] = "1"
+
+
 # os.environ['JAVA_HOME'] = "/Library/Java/JavaVirtualMachines/jdk1.8.0_162.jdk/Contents/Home"
 # os.environ['SPARK_HOME'] = "/usr/local/spark-3.3.0-bin-hadoop3"
 
-def init_spark(apply_pyarrow_settings: bool = True,
+def init_spark(master: str = "local[8]",
+               apply_pyarrow_settings: bool = True,
                apply_extra_spark_settings: bool = True,
                apply_pandas_settings: bool = True) -> SparkSession:
     """
@@ -24,7 +26,7 @@ def init_spark(apply_pyarrow_settings: bool = True,
 
     # init or get spark session.
     spark = (SparkSession.builder
-             .master("local[8]")
+             .master(master)
              .appName("fs-spark")
              )
 
