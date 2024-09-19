@@ -1,16 +1,25 @@
+import logging
+from typing import Optional, Union, List, Set, Tuple
 
+import numpy as np
+import pandas as pd
+from pandas import DataFrame, Series
+from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler
 
+logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
+logger = logging.getLogger("pickfeat")
+logger.setLevel(logging.INFO)
 
 class FSDataFrame:
     """
-    FSDataFrame is a representation of a Spark DataFrame with some functionalities to perform feature selection.
-    An object from FSDataFrame is basically represented by a Spark DataFrame with samples
+    FSDataFrame is a representation of a DataFrame with some functionalities to perform feature selection.
+    An object from FSDataFrame is basically represented by a  DataFrame with samples
     as rows and features as columns, with extra distributed indexed pandas series for
     features names and samples labels.
 
-    An object of FSDataFrame offers an interface to a Spark DataFrame, a Pandas on Spark DataFrame
-    (e.g. suitable for visualization) or a Spark DataFrame with features as a Dense column vector (e.g. suitable for
-    applying most algorithms from Spark MLib API).
+    An object of FSDataFrame offers an interface to a DataFrame, a Pandas on  DataFrame
+    (e.g. suitable for visualization) or a  DataFrame with features as a Dense column vector (e.g. suitable for
+    applying most algorithms from  MLib API).
 
     It can also be split in training and testing dataset and filtered by removing selected features (by name or index).
 
@@ -20,7 +29,7 @@ class FSDataFrame:
 
     def __init__(
             self,
-            df: Union[pyspark.sql.DataFrame, pyspark.pandas.DataFrame],
+            df: DataFrame,
             sample_col: str = None,
             label_col: str = None,
             row_index_col: Optional[str] = '_row_index',
@@ -33,7 +42,7 @@ class FSDataFrame:
         Expected an input DataFrame with 2+N columns.
         After specifying sample id and sample label columns, the remaining N columns will be considered as features.
 
-        :param df: Spark (or Pandas on Spark) DataFrame
+        :param df: Pandas DataFrame
         :param sample_col: Sample id column name
         :param label_col: Sample label column name
         :param row_index_col: Optional. Column name of row indices.
@@ -76,55 +85,45 @@ class FSDataFrame:
         """
         col_names = self.__df.columns
         if self.__sample_col not in col_names:
-            raise DataFormatError(f"Column sample name {self.__sample_col} not found...")
+            raise ValueError(f"Column sample name {self.__sample_col} not found...")
         elif self.__label_col not in col_names:
-            raise DataFormatError(f"Column label name {self.__label_col} not found...")
+            raise ValueError(f"Column label name {self.__label_col} not found...")
         elif not isinstance(self.__row_index_name, str):
-            raise DataFormatError("Row index column name must be a valid string...")
+            raise ValueError("Row index column name must be a valid string...")
         else:
             pass
 
-    @staticmethod
-    def _convert_psdf_to_sdf(df: Union[pyspark.pandas.DataFrame, pyspark.sql.DataFrame]) -> pyspark.sql.DataFrame:
-        """
-        Convert Pandas on Spark DataFrame (psdf) to Spark DataFrame (sdf).
-
-        :param df: Spark (or Pandas on Spark) DataFrame
-        :return: Spark DataFrame
-        """
-        return df.to_spark(index_col=None) if isinstance(df, pyspark.pandas.DataFrame) else df
-
-    def _set_indexed_cols(self) -> pyspark.pandas.series.Series:
+    def _set_indexed_cols(self) -> Series:
         """
         Create a distributed indexed Series representing features.
 
-        :return: Pandas on Spark (PoS) Series
+        :return: Pandas on  (PoS) Series
         """
-        # TODO: Check for equivalent to pandas distributed Series in Spark.
+        # TODO: Check for equivalent to pandas distributed Series in .
         non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_name]
         features = [f for f in self.__df.columns if f not in non_features_cols]
         return Series(features)
 
-    def _set_indexed_rows(self) -> pyspark.pandas.series.Series:
+    def _set_indexed_rows(self) -> Series:
         """
         Create a distributed indexed Series representing samples labels.
         It will use existing row indices, if any.
 
-        :return: Pandas on Spark (PoS) Series
+        :return: Pandas on  (PoS) Series
         """
-        # TODO: Check for equivalent to pandas distributed Series in Spark.
+        # TODO: Check for equivalent to pandas distributed Series in .
         label = self.__df.select(self.__label_col).collect()
         row_index = self.__df.select(self.__row_index_name).collect()
         return Series(label, index=row_index)
 
-    def get_features_indexed(self) -> pyspark.pandas.series.Series:
+    def get_features_indexed(self) -> Series:
         """
         Return features names with indices as a Series.
         :return: Indexed Series.
         """
         return self.__indexed_features
 
-    def get_sample_label_indexed(self) -> pyspark.pandas.series.Series:
+    def get_sample_label_indexed(self) -> Series:
         """
         Return sample labels with indices as a Series.
         :return: Indexed Series.
@@ -154,13 +153,13 @@ class FSDataFrame:
         """
         return self.__indexed_instances.tolist()
 
-    def get_sdf_vector(self, output_column_vector: str = 'features') -> pyspark.sql.DataFrame:
+    def get_sdf_vector(self, output_column_vector: str = 'features') -> pd.DataFrame:
         """
-        Return a Spark dataframe with feature columns assembled into a column vector (a.k.a. Dense Vector column).
+        Return a  dataframe with feature columns assembled into a column vector (a.k.a. Dense Vector column).
         This format is required as input for multiple algorithms from MLlib API.
 
         :param: output_column_vector: Name of the output column vector.
-        :return: Spark DataFrame
+        :return:  DataFrame
         """
 
         sdf = self.__df
@@ -172,12 +171,12 @@ class FSDataFrame:
         return sdf_vector
 
     def get_sdf_and_label(self,
-                          output_column_vector: str = 'features') -> Tuple[pyspark.sql.dataframe.DataFrame, str, str]:
+                          output_column_vector: str = 'features') -> Tuple[DataFrame, str, str]:
         """
-        Extracts the Spark DataFrame and label column name from FSDataFrame.
+        Extracts the  DataFrame and label column name from FSDataFrame.
 
         :param: output_column_vector: Name of the output column vector.
-        :return: A tuple containing the Spark DataFrame and the label column name.
+        :return: A tuple containing the  DataFrame and the label column name.
         """
         sdf = self.get_sdf_vector(output_column_vector=output_column_vector)
         label_col = self.get_label_col_name()
@@ -195,19 +194,15 @@ class FSDataFrame:
         a = np.array(sdf.collect())
         return a
 
-    def to_psdf(self) -> pyspark.pandas.DataFrame:
+    def to_psdf(self) -> DataFrame:
         """
-        Convert Spark DataFrame to Pandas on Spark DataFrame
-        :return: Pandas on Spark DataFrame
+        Convert  DataFrame to Pandas on DataFrame
+        :return: Pandas on  DataFrame
         """
         return self.__df.pandas_api()
 
-    def get_sdf(self) -> pyspark.sql.DataFrame:
-        """
-        Return current Spark DataFrame
-        :return: Spark DataFrame
-        """
-        return self.__df
+    def get_sdf(self) -> DataFrame:
+       return self.__df
 
     def get_sample_col_name(self) -> str:
         """
@@ -233,15 +228,17 @@ class FSDataFrame:
         """
         return self.__row_index_name
 
-    def _add_row_index(self, index_name: str = '_row_index') -> pyspark.sql.DataFrame:
+    def _add_row_index(self, index_name: str = '_row_index') -> pd.DataFrame:
         """
         Add row indices to DataFrame.
         Unique indices of type integer will be added in non-consecutive increasing order.
 
-        :param: index_name: Name of the row index column.
-        :return: Spark DataFrame with extra column of row indices.
+        :param index_name: Name of the row index column.
+        :return: DataFrame with extra column of row indices.
         """
-        return self.__df.withColumn(index_name, monotonically_increasing_id())
+        # Add a new column with unique row indices using a range
+        self.__df[index_name] = range(len(self.__df))
+        return self.__df
 
     def count_features(self) -> int:
         """
@@ -365,6 +362,7 @@ class FSDataFrame:
                  label_type_cat: bool = True,
                  split_training_factor: float = 0.7) -> Tuple['FSDataFrame', 'FSDataFrame']:
         """
+        TODO: Split dataframe in training and test dataset, maintaining balance between classes.
         Split DataFrame into training and test dataset.
         It will generate a nearly class-balanced training
         and testing set for both categorical and continuous label input.
@@ -376,53 +374,19 @@ class FSDataFrame:
         :return: Tuple of FSDataFrames. First element is the training set and second element is the testing set.
         """
 
-        row_index_col = self.get_row_index_name()
-        label_col = self.get_label_col_name()
-        sdf = self.__df
 
-        # create a temporal indexed categorical variable for sampling and splitting the data set.
-        tmp_label_col = '_tmp_label_indexed'
-        if label_type_cat:
-            sdf = _string_indexer(sdf=sdf, input_col=label_col, output_col=tmp_label_col)
-        else:
-            # If the input label is continuous, create a uniform random distribution [0,1] and binarize this variable.
-            # It will be used then as categorical for sampling the dataframe.
-            sdf = sdf.withColumn("_tmp_uniform_rand", rand())
-            sdf = (_binarizer(sdf,
-                              input_col="_tmp_uniform_rand",
-                              output_col=tmp_label_col,
-                              threshold=0.5,
-                              drop_input_col=True)
-                   )
 
-        # Get number of levels for categorical variable.
-        levels = [lv[tmp_label_col] for lv in sdf.select([tmp_label_col]).distinct().collect()]
-
-        # Sampling DataFrame to extract class-balanced training set.
-        # This will keep similar proportion by stratum in both training and testing set.
-        fraction_dict = dict(zip(levels, [split_training_factor] * len(levels)))
-        training_df = sdf.sampleBy(col=sdf[tmp_label_col], fractions=fraction_dict)
-
-        # Filter out the testing set from the input Dataframe. testing_df = input_sdf[-training_df].
-        testing_df = sdf.join(training_df, [row_index_col], "leftanti")
-
-        # Drop tmp cols
-        training_df = training_df.drop(tmp_label_col)
-        testing_df = testing_df.drop(tmp_label_col)
-
-        return (self.update(training_df, self.__sample_col, self.__label_col, self.__row_index_name),
-                self.update(testing_df, self.__sample_col, self.__label_col, self.__row_index_name))
 
     @classmethod
     def update(cls,
-               df: pyspark.sql.DataFrame,
+               df: DataFrame,
                sample_col: str,
                label_col: str,
                row_index_col: str):
         """
         Create a new instance of FSDataFrame.
 
-        :param df: Spark DataFrame
+        :param df:  DataFrame
         :param sample_col: Name of sample id column.
         :param label_col: Name of sample label column.
         :param row_index_col: Name of row (instances) id column.
@@ -430,4 +394,52 @@ class FSDataFrame:
         :return: FSDataFrame
         """
         return cls(df, sample_col, label_col, row_index_col)
+
+    def _assemble_column_vector(self,
+                                input_feature_cols: List[str],
+                                output_column_vector: str = 'features',
+                                drop_input_cols: bool = True) -> pd.DataFrame:
+        """
+        Assemble features (columns) from DataFrame into a column of type Numpy array.
+
+        :param drop_input_cols: Boolean flag to drop the input feature columns.
+        :param input_feature_cols: List of feature column names.
+        :param output_column_vector: Name of the output column that will contain the combined vector.
+        :param sdf: Pandas DataFrame
+
+        :return: DataFrame with column of type Numpy array.
+        """
+
+        # Combine the input columns into a single vector (Numpy array)
+        self.__df[output_column_vector] = self.__df[input_feature_cols].apply(lambda row: np.array(row), axis=1)
+
+        # Drop input columns if flag is set to True
+        if drop_input_cols:
+            return self.__df.drop(columns=input_feature_cols)
+        else:
+            return self.__df
+
+def _disassemble_column_vector(self,
+                                   features_cols: List[str],
+                                   col_vector_name: str,
+                                   drop_col_vector: bool = True) -> pd.DataFrame:
+    """
+    Convert a column of Numpy arrays in DataFrame to individual columns (a.k.a features).
+    This is the reverse operation of `_assemble_column_vector`.
+
+    :param features_cols: List of new feature column names.
+    :param col_vector_name: Name of the column that contains the vector (Numpy array).
+    :param drop_col_vector: Boolean flag to drop the original vector column.
+    :return: DataFrame with individual feature columns.
+    """
+
+    # Unpack the vector (Numpy array) into individual columns
+    for i, feature in enumerate(features_cols):
+        self.__df[feature] = self.__df[col_vector_name].apply(lambda x: x[i])
+
+    # Drop the original vector column if needed
+    if drop_col_vector:
+       self.__df = self.__df.drop(columns=[col_vector_name])
+
+    return self.__df
 
