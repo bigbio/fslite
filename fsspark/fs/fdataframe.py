@@ -72,6 +72,9 @@ class FSDataFrame:
     def get_feature_matrix(self) -> numpy.array:
         return self.__matrix
 
+    def get_label_vector(self) -> numpy.array:
+        return self.__labels_matrix
+
     def get_sample_col_name(self) -> str:
         """
         Return sample id column name.
@@ -131,6 +134,56 @@ class FSDataFrame:
 
     def get_scaled_method(self):
         return self.__is_scaled[1]
+
+    def select_features_by_index(self, feature_indexes: List[int]) -> 'FSDataFrame':
+        """
+        Keep only the specified features (by index) and return an updated instance of FSDataFrame.
+
+        :param feature_indexes: List of feature column indices to keep.
+        :return: A new FSDataFrame instance with only the selected features.
+        """
+        # Filter the feature matrix to retain only the selected columns (features)
+        updated_matrix = self.__matrix[:, feature_indexes]
+
+        # Filter the original feature names to retain only the selected ones
+        updated_features = [self.__original_features[i] for i in feature_indexes]
+
+        # Create a new DataFrame with the retained features and their names
+        updated_df = pd.DataFrame(updated_matrix, columns=updated_features)
+
+        # Reattach the sample column (if it exists)
+        if self.__sample_col:
+            updated_df[self.__sample_col] = self.__samples
+
+        # Reattach the label column
+        updated_df[self.__label_col] = self.__labels
+
+        # Return a new instance of FSDataFrame with the updated data
+        return FSDataFrame(updated_df, sample_col=self.__sample_col, label_col=self.__label_col)
+
+    def to_pandas(self) -> DataFrame:
+        """
+        Return the DataFrame representation of the FSDataFrame.
+
+        :return: Pandas DataFrame.
+        """
+
+        df = pd.DataFrame()
+
+        # Reattach the sample column (if it exists)
+        if self.__sample_col:
+            df[self.__sample_col] = self.__samples
+
+        # Reattach the label column
+        df[self.__label_col] = self.__labels
+
+        # Create a DataFrame from the feature matrix
+        df_features = pd.DataFrame(self.__matrix, columns=self.__original_features)
+
+        # Concatenate the features DataFrame
+        df = pd.concat([df, df_features], axis=1)
+
+        return df
 
     def split_df(self,
                  label_type_cat: bool = True,
