@@ -1,43 +1,48 @@
 import logging
 from typing import Dict, List
 
+import numpy as np
 import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
-from scipy.stats import pearsonr
+
+from fsspark.fs.fdataframe import FSDataFrame
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FS:UNIVARIATE")
 logger.setLevel(logging.INFO)
 
 
-def compute_univariate_corr(df: pd.DataFrame, features: List[str], label: str) -> Dict[str, float]:
+def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
     """
-    Compute the correlation coefficient between every column (features) in the input DataFrame and the label (class).
+    Compute the correlation coefficient between every column (features) in the input NumPy array and the label (class)
+    using a dictionary comprehension.
+
+    :param df: Input FSDataFrame
+    :return: Return dict {feature_index -> corr}
+    """
+
+    f_matrix = df.get_feature_matrix()  # get the feature matrix
+    labels = df.get_label_vector()  # get the label vector
+    features_index = range(f_matrix.shape[1])  # get the feature index
+
+    return {
+        f_index: abs(np.corrcoef(f_matrix[:, f_index], labels)[0, 1])
+        for f_index in features_index
+    }
+
+
+def univariate_correlation_selector(df: FSDataFrame, corr_threshold: float = 0.3) -> List[int]:
+    """
+    Select features based on their correlation with a label (class), if the correlation value is less than the specified
+    threshold.
 
     :param df: Input DataFrame
-    :param features: List of feature column names
-    :param label: Label column name
-
-    :return: Return dict {feature -> corr}
-    """
-    correlations = {feature: abs(df[feature].corr(df[label])) for feature in features}
-    return correlations
-
-
-def univariate_correlation_selector(df: pd.DataFrame, features: List[str], label: str, corr_threshold: float = 0.3) -> \
-List[str]:
-    """
-    Select features based on their correlation with a label (class), if the correlation value is less than the specified threshold.
-
-    :param df: Input DataFrame
-    :param features: List of feature column names
-    :param label: Label column name
     :param corr_threshold: Maximum allowed correlation threshold
 
-    :return: List of selected feature names
+    :return: List of selected feature indices
     """
-    correlations = compute_univariate_corr(df, features, label)
-    selected_features = [feature for feature, corr in correlations.items() if corr <= corr_threshold]
+    correlations = compute_univariate_corr(df)
+    selected_features = [feature_index for feature_index, corr in correlations.items() if corr <= corr_threshold]
     return selected_features
 
 
@@ -83,28 +88,38 @@ def univariate_selector(df: pd.DataFrame, features: List[str], label: str, label
     return selected_features
 
 
-def univariate_filter(df: pd.DataFrame, features: List[str], label: str, univariate_method: str = 'u_corr',
-                      **kwargs) -> pd.DataFrame:
+def univariate_filter(df: FSDataFrame,
+                      univariate_method: str = 'u_corr',
+                      **kwargs) -> FSDataFrame:
     """
     Filter features after applying a univariate feature selector method.
 
     :param df: Input DataFrame
-    :param features: List of feature column names
-    :param label: Label column name
     :param univariate_method: Univariate selector method ('u_corr', 'anova', 'f_regression')
 
     :return: Filtered DataFrame with selected features
     """
 
+    selected_features = []
+
     if univariate_method == 'anova':
-        selected_features = univariate_selector(df, features, label, label_type='categorical', **kwargs)
+        # TODO: Implement ANOVA selector
+        # selected_features = univariate_selector(df, features, label, label_type='categorical', **kwargs)
+        pass
     elif univariate_method == 'f_regression':
-        selected_features = univariate_selector(df, features, label, label_type='continuous', **kwargs)
+        # TODO: Implement F-regression selector
+        # selected_features = univariate_selector(df, features, label, label_type='continuous', **kwargs)
+        pass
     elif univariate_method == 'u_corr':
-        selected_features = univariate_correlation_selector(df, features, label, **kwargs)
+        selected_features = univariate_correlation_selector(df, **kwargs)
     else:
         raise ValueError(f"Univariate method {univariate_method} not supported.")
 
     logger.info(f"Applying univariate filter using method: {univariate_method}")
 
-    return df[selected_features + [label]]  # Return DataFrame with selected features and label column
+    if len(selected_features) == 0:
+        logger.warning("No features selected. Returning original DataFrame.")
+        return df
+    else:
+        logger.info(f"Selected {len(selected_features)} features...")
+        return df.select_features_by_index(selected_features)
