@@ -2,4 +2,4 @@ networkx
 numpy
 setuptools
 pandas
-pyarrow
+scikit-learn
