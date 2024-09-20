@@ -1,44 +1,27 @@
-import unittest
-
 import pandas as pd
 from fsspark.utils.datasets import get_tnbc_data_path
 from fsspark.fs.fdataframe import FSDataFrame
 
 from fsspark.fs.univariate import univariate_filter
 
-
-class UnivariateMethodsTest(unittest.TestCase):
+def test_univariate_filter_corr():
     """
-    Define testing methods for FSDataFrame class.
+    Test univariate_filter method with 'u_corr' method.
+    :return: None
     """
 
-    def setUp(self) -> None:
-        # import tsv as pandas DataFrame
-        self.df = pd.read_csv(get_tnbc_data_path(), sep='\t')
+    # import tsv as pandas DataFrame
+    df = pd.read_csv(get_tnbc_data_path(), sep='\t')
 
-        # create FSDataFrame instance
-        self.fsdf = FSDataFrame(df=self.df,
-                                sample_col='Sample',
-                                label_col='label')
+    # create FSDataFrame instance
+    fs_df = FSDataFrame(df=df,sample_col='Sample',label_col='label')
 
-    def tearDown(self) -> None:
-        pass
+    fsdf_filtered = univariate_filter(fs_df,univariate_method='u_corr', corr_threshold=0.3)
 
-    def test_univariate_filter_corr(self):
-        """
-        Test univariate_filter method with 'u_corr' method.
-        :return: None
-        """
+    assert fs_df.count_features() == 500
+    assert fsdf_filtered.count_features() == 211
 
-        fsdf = self.fsdf
-        fsdf_filtered = univariate_filter(fsdf,
-                                          univariate_method='u_corr',
-                                          corr_threshold=0.3)
-
-        self.assertEqual(fsdf.count_features(), 500)
-        self.assertEqual(fsdf_filtered.count_features(), 211)
-
-        # Export the filtered DataFrame as Pandas DataFrame
-        df_filtered = fsdf_filtered.to_pandas()
-        df_filtered.to_csv('filtered_tnbc_data.csv', index=False)
+    # Export the filtered DataFrame as Pandas DataFrame
+    df_filtered = fsdf_filtered.to_pandas()
+    df_filtered.to_csv('filtered_tnbc_data.csv', index=False)
 
