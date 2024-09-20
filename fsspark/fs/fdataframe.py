@@ -51,27 +51,25 @@ class FSDataFrame:
         :param parse_features: Coerce all features to float.
         """
 
-        self.__df = df
         self.__sample_col = sample_col
         self.__label_col = label_col
-        self.__row_index_name = row_index_col
+        self.__row_index_col = row_index_col
+        self.__df = df
 
         # check input dataframe
         self._check_df()
 
         # replace dots in column names, if any.
         if parse_col_names:
-            #  TODO: Dots in column names are prone to errors, since dots are used to access attributes from DataFrame.
-            #        Should we make this replacement optional? Or print out a warning?
             self.__df = self.__df.toDF(*(c.replace('.', '_') for c in self.__df.columns))
 
         # If the specified row index column name does not exist, add row index to the dataframe
-        if self.__row_index_name not in self.__df.columns:
-            self.__df = self._add_row_index(index_name=self.__row_index_name)
+        if self.__row_index_col not in self.__df.columns:
+            self.__df = self._add_row_index(index_name=self.__row_index_col)
 
         if parse_features:
             # coerce all features to float
-            non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_name]
+            non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_col]
             feature_cols = [c for c in self.__df.columns if c not in non_features_cols]
             self.__df = self.__df.withColumns({c: self.__df[c].cast('float') for c in feature_cols})
 
@@ -88,7 +86,7 @@ class FSDataFrame:
             raise ValueError(f"Column sample name {self.__sample_col} not found...")
         elif self.__label_col not in col_names:
             raise ValueError(f"Column label name {self.__label_col} not found...")
-        elif not isinstance(self.__row_index_name, str):
+        elif not isinstance(self.__row_index_col, str):
             raise ValueError("Row index column name must be a valid string...")
         else:
             pass
@@ -98,21 +96,24 @@ class FSDataFrame:
         Create a distributed indexed Series representing features.
         :return: Pandas on  (PoS) Series
         """
-        non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_name]
+        non_features_cols = [self.__sample_col, self.__label_col, self.__row_index_col]
         features = [f for f in self.__df.columns if f not in non_features_cols]
         return Series(features)
 
-    def _set_indexed_rows(self) -> Series:
+    def _set_indexed_rows(self) -> pd.Series:
         """
-        Create a distributed indexed Series representing samples labels.
-        It will use existing row indices, if any.
+        Create an indexed Series representing sample labels.
+        It will use existing row indices from the DataFrame.
 
         :return: Pandas Series
         """
 
-        label = self.__df[self.__label_col]
-        row_index = self.__df[self.__row_index_name]
-        return pd.Series(data=label.values, index=row_index.values)
+        # Extract the label and row index columns from the DataFrame
+        labels = self.__df[self.__label_col]
+        row_indices = self.__df[self.__row_index_col]
+
+        # Create a Pandas Series with row_indices as index and labels as values
+        return pd.Series(data=labels.values, index=row_indices.values)
 
     def get_features_indexed(self) -> Series:
         """
@@ -224,7 +225,7 @@ class FSDataFrame:
 
         :return: Row id column name.
         """
-        return self.__row_index_name
+        return self.__row_index_col
 
     def _add_row_index(self, index_name: str = '_row_index') -> pd.DataFrame:
         """
@@ -277,12 +278,12 @@ class FSDataFrame:
             sdf = sdf.select(
                 self.__sample_col,
                 self.__label_col,
-                self.__row_index_name,
+                self.__row_index_col,
                 *features)
         else:
             sdf = sdf.drop(*features)
 
-        fsdf_filtered = self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_name)
+        fsdf_filtered = self.update(sdf, self.__sample_col, self.__label_col, self.__row_index_col)
         count_b = fsdf_filtered.count_features()
 
         logger.info(f"{count_b} features out of {count_a} remain after applying this filter...")
