@@ -19,9 +19,7 @@ def test_initializes_fsdataframe():
         sample_col='sample_id',
         label_col='label',
         row_index_col='_row_index',
-        parse_col_names=False,
-        parse_features=False
     )
 
     # Assertions to check if the initialization is correct
-    assert (fs_df.get_sdf(), df)
+    assert isinstance(fs_df, FSDataFrame)
