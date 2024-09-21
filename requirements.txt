@@ -3,3 +3,4 @@ numpy
 setuptools
 pandas
 scikit-learn
+scipy

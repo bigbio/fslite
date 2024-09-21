@@ -1,10 +1,12 @@
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import numpy
 import numpy as np
 import pandas as pd
+import psutil
 from pandas import DataFrame
+from scipy import sparse
 from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler, LabelEncoder
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
@@ -28,45 +30,97 @@ class FSDataFrame:
     [...]
 
     """
-
     def __init__(
             self,
-            df: DataFrame,
-            sample_col: str = None,
-            label_col: str = None,
+            df: pd.DataFrame,
+            sample_col: Optional[str] = None,
+            label_col: Optional[str] = None,
+            sparse_threshold: float = 0.7,  # Threshold for sparsity
+            memory_threshold: Optional[float] = 0.75  # Proportion of system memory to use for dense arrays
     ):
         """
         Create an instance of FSDataFrame.
 
-        Expected an input DataFrame with 2+N columns.
-        After specifying sample id and sample label columns, the remaining N columns will be considered as features.
+        The input DataFrame should contain 2+N columns. After specifying the sample id and label columns,
+        the remaining N columns will be considered features. The feature columns should contain only numerical data.
+        The DataFrame is stored in a dense or sparse format based on the sparsity of the data and available memory.
 
-        :param df: Pandas DataFrame
-        :param sample_col: Sample id column name
-        :param label_col: Sample label column name
+        :param df: Input Pandas DataFrame
+        :param sample_col: Column name for sample identifiers (optional)
+        :param label_col: Column name for labels (required)
+        :param sparse_threshold: Threshold for sparsity, default is 70%. If the proportion of zero entries
+        in the feature matrix exceeds this value, the matrix is stored in a sparse format unless memory allows.
+        :param memory_threshold: Proportion of system memory available to use before deciding on sparse/dense.
         """
+        self.__df = df.copy()
 
-        if sample_col is None:
+        # Check for necessary columns
+        columns_to_drop = []
+
+        # Handle sample column
+        if sample_col:
+            if sample_col not in df.columns:
+                raise ValueError(f"Sample column '{sample_col}' not found in DataFrame.")
+            self.__sample_col = sample_col
+            self.__samples = df[sample_col].tolist()
+            columns_to_drop.append(sample_col)
+        else:
             self.__sample_col = None
             self.__samples = []
             logging.info("No sample column specified.")
-        else:
-            self.__sample_col = sample_col
-            self.__samples = df[sample_col].tolist()
-            df = df.drop(columns=[sample_col])
 
+        # Handle label column
         if label_col is None:
-            raise ValueError("No label column specified. A class/label column is required.")
-        else:
-            self.__label_col = label_col
-            self.__labels = df[label_col].tolist()
-            label_encoder = LabelEncoder()
-            self.__labels_matrix = label_encoder.fit_transform(df[label_col]).tolist()
-            df = df.drop(columns=[label_col])
+            raise ValueError("A label column is required but was not specified.")
+        if label_col not in df.columns:
+            raise ValueError(f"Label column '{label_col}' not found in DataFrame.")
 
-        self.__original_features = df.columns.tolist()
-        numerical_df = df.select_dtypes(include=[np.number])
-        self.__matrix = numerical_df.to_numpy(dtype=np.float32)
+        self.__label_col = label_col
+        self.__labels = df[label_col].tolist()
+
+        # Encode labels
+        label_encoder = LabelEncoder()
+        self.__labels_matrix = label_encoder.fit_transform(df[label_col]).tolist()
+        columns_to_drop.append(label_col)
+
+        # Drop both sample and label columns in one step
+        self.__df = self.__df.drop(columns=columns_to_drop)
+
+        # Extract features
+        self.__original_features = self.__df.columns.tolist()
+
+        # Ensure only numerical features are retained
+        numerical_df = self.__df.select_dtypes(include=[np.number])
+        if numerical_df.empty:
+            raise ValueError("No numerical features found in the DataFrame.")
+
+        # Check sparsity
+        num_elements = numerical_df.size
+        num_zeros = (numerical_df == 0).sum().sum()
+        sparsity = num_zeros / num_elements
+
+        dense_matrix_size = numerical_df.memory_usage(deep=True).sum()  # In bytes
+        available_memory = psutil.virtual_memory().available  # In bytes
+
+        if sparsity > sparse_threshold:
+            if dense_matrix_size < memory_threshold * available_memory:
+                # Use dense matrix if enough memory is available
+                logging.info(f"Data is sparse (sparsity={sparsity:.2f}) but enough memory available. "
+                             f"Using a dense matrix.")
+                self.__matrix = numerical_df.to_numpy(dtype=np.float32)
+                self.__is_sparse = False
+            else:
+                # Use sparse matrix due to memory constraints
+                logging.info(f"Data is sparse (sparsity={sparsity:.2f}), memory insufficient for dense matrix. "
+                             f"Using a sparse matrix representation.")
+                self.__matrix = sparse.csr_matrix(numerical_df.to_numpy(dtype=np.float32))
+                self.__is_sparse = True
+        else:
+            # Use dense matrix since it's not sparse
+            logging.info(f"Data is not sparse (sparsity={sparsity:.2f}), using a dense matrix.")
+            self.__matrix = numerical_df.to_numpy(dtype=np.float32)
+            self.__is_sparse = False
+
         self.__is_scaled = (False, None)
 
     def get_feature_matrix(self) -> numpy.array:
@@ -124,7 +178,7 @@ class FSDataFrame:
         else:
             raise ValueError("`scaler_method` must be one of: min_max, max_abs, standard or robust.")
 
-        # TODO: Scale only the features for now, we have to investigate if we scale cateogrical variables
+        # TODO: Scale only the features for now, we have to investigate if we scale categorical variables
         self.__matrix = scaler.fit_transform(self.__matrix)
         self.__is_scaled = (True, scaler_method)
         return True
@@ -134,6 +188,9 @@ class FSDataFrame:
 
     def get_scaled_method(self):
         return self.__is_scaled[1]
+
+    def is_sparse(self):
+        return self.__is_sparse
 
     def select_features_by_index(self, feature_indexes: List[int]) -> 'FSDataFrame':
         """
