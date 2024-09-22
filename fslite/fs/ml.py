@@ -4,34 +4,57 @@ A set of pre-defined ML algorithms wrapped with cross-validation approach
 for feature selection (e.g., rank by feature importance) and prediction.
 
 """
+
 import warnings
 from typing import List, Any, Dict, Optional, Union
 
 import pandas as pd
 from pyspark.ml import Estimator, Model
-from pyspark.ml.classification import (RandomForestClassificationModel,
-                                       LinearSVCModel,
-                                       RandomForestClassifier,
-                                       LinearSVC, LogisticRegression, LogisticRegressionModel)
-from pyspark.ml.evaluation import (Evaluator,
-                                   BinaryClassificationEvaluator,
-                                   MulticlassClassificationEvaluator,
-                                   RegressionEvaluator)
+from pyspark.ml.classification import (
+    RandomForestClassificationModel,
+    LinearSVCModel,
+    RandomForestClassifier,
+    LinearSVC,
+    LogisticRegression,
+    LogisticRegressionModel,
+)
+from pyspark.ml.evaluation import (
+    Evaluator,
+    BinaryClassificationEvaluator,
+    MulticlassClassificationEvaluator,
+    RegressionEvaluator,
+)
 from pyspark.ml.regression import RandomForestRegressionModel, RandomForestRegressor
-from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel, Param
+from pyspark.ml.tuning import (
+    CrossValidator,
+    ParamGridBuilder,
+    CrossValidatorModel,
+    Param,
+)
 
-from fslite.fs.constants import (RF_BINARY,
-                                 LSVC_BINARY,
-                                 FM_BINARY,
-                                 RF_MULTILABEL,
-                                 LR_MULTILABEL,
-                                 RF_REGRESSION,
-                                 FM_REGRESSION,
-                                 ML_METHODS)
+from fslite.fs.constants import (
+    RF_BINARY,
+    LSVC_BINARY,
+    FM_BINARY,
+    RF_MULTILABEL,
+    LR_MULTILABEL,
+    RF_REGRESSION,
+    FM_REGRESSION,
+    ML_METHODS,
+)
 from fslite.fs.core import FSDataFrame
 
-ESTIMATORS_CLASSES = [RandomForestClassifier, RandomForestRegressionModel, LinearSVC, LogisticRegression]
-EVALUATORS_CLASSES = [BinaryClassificationEvaluator, MulticlassClassificationEvaluator, RegressionEvaluator]
+ESTIMATORS_CLASSES = [
+    RandomForestClassifier,
+    RandomForestRegressionModel,
+    LinearSVC,
+    LogisticRegression,
+]
+EVALUATORS_CLASSES = [
+    BinaryClassificationEvaluator,
+    MulticlassClassificationEvaluator,
+    RegressionEvaluator,
+]
 
 
 # Define an abstract class that allow to create a factory of models
@@ -52,18 +75,24 @@ class MLCVModel:
     _best_model: Model = None
     _fsdf: FSDataFrame = None
 
-    def __init__(self,
-                 estimator: Union[RandomForestClassifier |
-                                  RandomForestRegressionModel |
-                                  LinearSVC |
-                                  LogisticRegression],
-                 evaluator: Union[BinaryClassificationEvaluator |
-                                  MulticlassClassificationEvaluator |
-                                  RegressionEvaluator],
-                 estimator_params: Optional[Dict[str, Any]] = None,
-                 evaluator_params: Optional[Dict[str, Any]] = None,
-                 grid_params: Optional[Dict[str, List[Any]]] = None,
-                 cv_params: Optional[Dict[str, Any]] = None):
+    def __init__(
+        self,
+        estimator: Union[
+            RandomForestClassifier
+            | RandomForestRegressionModel
+            | LinearSVC
+            | LogisticRegression
+        ],
+        evaluator: Union[
+            BinaryClassificationEvaluator
+            | MulticlassClassificationEvaluator
+            | RegressionEvaluator
+        ],
+        estimator_params: Optional[Dict[str, Any]] = None,
+        evaluator_params: Optional[Dict[str, Any]] = None,
+        grid_params: Optional[Dict[str, List[Any]]] = None,
+        cv_params: Optional[Dict[str, Any]] = None,
+    ):
         """
         Initializes the MLModel with optional estimator, evaluator, and parameter specifications.
         """
@@ -96,7 +125,9 @@ class MLCVModel:
         # Initialize and set cross-validator parameters
         self._set_cross_validator()
 
-    def _parse_grid_params(self, grid_params: Dict[str, List[Any]]) -> List[Dict[Param, Any]]:
+    def _parse_grid_params(
+        self, grid_params: Dict[str, List[Any]]
+    ) -> List[Dict[Param, Any]]:
         """
         Parse the grid parameters to create a list of dictionaries.
 
@@ -108,10 +139,12 @@ class MLCVModel:
             if hasattr(self.estimator, param):
                 grid = grid.addGrid(getattr(self.estimator, param), values)
             else:
-                raise AttributeError(f"{self.estimator.__class__.__name__} does not have attribute {param}")
+                raise AttributeError(
+                    f"{self.estimator.__class__.__name__} does not have attribute {param}"
+                )
         return grid.build()
 
-    def _validate_estimator(self, estimator: Estimator) -> 'MLCVModel':
+    def _validate_estimator(self, estimator: Estimator) -> "MLCVModel":
         """
         Validate the estimator.
 
@@ -123,7 +156,7 @@ class MLCVModel:
             raise ValueError(f"Estimator must be an instance of {ESTIMATORS_CLASSES}")
         return self
 
-    def _validate_evaluator(self, evaluator: Evaluator) -> 'MLCVModel':
+    def _validate_evaluator(self, evaluator: Evaluator) -> "MLCVModel":
         """
         Validate the evaluator.
 
@@ -145,7 +178,9 @@ class MLCVModel:
             return
         for param, _ in estimator_params.items():
             if not self.estimator.hasParam(param):
-                raise AttributeError(f"{self.estimator.__class__.__name__} does not have attribute {param}")
+                raise AttributeError(
+                    f"{self.estimator.__class__.__name__} does not have attribute {param}"
+                )
 
     def _validate_evaluator_params(self, evaluator_params: Dict[str, Any]) -> None:
         """
@@ -157,9 +192,11 @@ class MLCVModel:
             return
         for param, _ in evaluator_params.items():
             if not self.evaluator.hasParam(param):
-                raise AttributeError(f"{self.evaluator.__class__.__name__} does not have attribute {param}")
+                raise AttributeError(
+                    f"{self.evaluator.__class__.__name__} does not have attribute {param}"
+                )
 
-    def _set_evaluator_params(self) -> 'MLCVModel':
+    def _set_evaluator_params(self) -> "MLCVModel":
         """
         Set evaluator parameters.
         """
@@ -167,7 +204,7 @@ class MLCVModel:
             self.evaluator = self.evaluator.setParams(**self.evaluator_params)
         return self
 
-    def _set_estimator_params(self) -> 'MLCVModel':
+    def _set_estimator_params(self) -> "MLCVModel":
         """
         Set estimator parameters.
         """
@@ -175,7 +212,7 @@ class MLCVModel:
             self.estimator = self.estimator.setParams(**self.estimator_params)
         return self
 
-    def _set_cv_params(self, cv_params: Dict[str, Any]) -> 'MLCVModel':
+    def _set_cv_params(self, cv_params: Dict[str, Any]) -> "MLCVModel":
         """
         Parse the cross-validator parameters to create an instance of CrossValidator.
 
@@ -187,10 +224,12 @@ class MLCVModel:
             if hasattr(self._cross_validator, param):
                 setattr(self._cross_validator, param, value)
             else:
-                raise AttributeError(f"{self._cross_validator.__class__.__name__} does not have attribute {param}")
+                raise AttributeError(
+                    f"{self._cross_validator.__class__.__name__} does not have attribute {param}"
+                )
         return self
 
-    def _set_cross_validator(self) -> 'MLCVModel':
+    def _set_cross_validator(self) -> "MLCVModel":
         """
         Build the model using the cross-validator.
 
@@ -203,14 +242,16 @@ class MLCVModel:
                 evaluator=self.evaluator,
             )
             if self.cv_params is not None:
-                self._cross_validator = self._cross_validator.setParams(**self.cv_params)
+                self._cross_validator = self._cross_validator.setParams(
+                    **self.cv_params
+                )
             return self
         except Exception as e:
             print(f"An error occurred while creating the CrossValidator: {str(e)}")
             # Handle the exception or raise it to be handled by the caller
             raise
 
-    def fit(self, fsdf: FSDataFrame) -> 'MLCVModel':
+    def fit(self, fsdf: FSDataFrame) -> "MLCVModel":
         """
         Fit the model using the cross-validator.
 
@@ -219,8 +260,14 @@ class MLCVModel:
         # Extract the Spark DataFrame and label column name from FSDataFrame
         self._fsdf = fsdf
 
-        if self._cross_validator is None or self.estimator is None or self.evaluator is None:
-            raise ValueError("Cross-validator, estimator, or evaluator not set properly.")
+        if (
+            self._cross_validator is None
+            or self.estimator is None
+            or self.evaluator is None
+        ):
+            raise ValueError(
+                "Cross-validator, estimator, or evaluator not set properly."
+            )
 
         self._fitted_cv_model = self._cross_validator.fit(self._fsdf.get_sdf_vector())
         return self
@@ -232,17 +279,21 @@ class MLCVModel:
         :return: The best model.
         """
         if self._fitted_cv_model is None:
-            raise ValueError("CrossValidatorModel not fitted. Use fit() to fit the model.")
+            raise ValueError(
+                "CrossValidatorModel not fitted. Use fit() to fit the model."
+            )
         self._best_model = self._fitted_cv_model.bestModel
         return self._best_model
 
     # define a static method that allows to set a ml model based on the model type
     @staticmethod
-    def create_model(model_type: str,
-                     estimator_params: Dict[str, Any] = None,
-                     evaluator_params: Dict[str, Any] = None,
-                     grid_params: Dict[str, List[Any]] = None,
-                     cv_params: Dict[str, Any] = None) -> 'MLCVModel':
+    def create_model(
+        model_type: str,
+        estimator_params: Dict[str, Any] = None,
+        evaluator_params: Dict[str, Any] = None,
+        grid_params: Dict[str, List[Any]] = None,
+        cv_params: Dict[str, Any] = None,
+    ) -> "MLCVModel":
         """
         Set a machine learning model based on the model type.
 
@@ -270,8 +321,10 @@ class MLCVModel:
             estimator = RandomForestRegressor()
             evaluator = RegressionEvaluator()
         else:
-            raise ValueError(f"Unsupported model type: {model_type}."
-                             f"Supported model types are: {list(ML_METHODS.keys())}")
+            raise ValueError(
+                f"Unsupported model type: {model_type}."
+                f"Supported model types are: {list(ML_METHODS.keys())}"
+            )
 
         ml_method = MLCVModel(
             estimator=estimator,
@@ -279,7 +332,7 @@ class MLCVModel:
             estimator_params=estimator_params,
             evaluator_params=evaluator_params,
             grid_params=grid_params,
-            cv_params=cv_params
+            cv_params=cv_params,
         )
 
         return ml_method
@@ -301,18 +354,22 @@ class MLCVModel:
 
         # raise exception if the model is not none
         if best_model is None:
-            raise ValueError("No ML model have been fitted. Use fit() to fit the model.")
-
-        df_features = pd.DataFrame(indexed_features.to_numpy(),
-                                   columns=["features"])
-
-        if isinstance(best_model, (RandomForestClassificationModel, RandomForestRegressionModel)):
-            df_scores = pd.DataFrame(
-                data=best_model.featureImportances.toArray(),
-                columns=["scores"]
+            raise ValueError(
+                "No ML model have been fitted. Use fit() to fit the model."
             )
 
-            df_scores = df_scores.reset_index(level=0).rename(columns={"index": "feature_index"})
+        df_features = pd.DataFrame(indexed_features.to_numpy(), columns=["features"])
+
+        if isinstance(
+            best_model, (RandomForestClassificationModel, RandomForestRegressionModel)
+        ):
+            df_scores = pd.DataFrame(
+                data=best_model.featureImportances.toArray(), columns=["scores"]
+            )
+
+            df_scores = df_scores.reset_index(level=0).rename(
+                columns={"index": "feature_index"}
+            )
 
             # merge the feature scores with the feature names
             df = df_features.merge(
@@ -323,14 +380,16 @@ class MLCVModel:
             df = df.sort_values(by="scores", ascending=False)
 
             # add feature percentile rank to the features_scores dataframe
-            df['percentile_rank'] = df['scores'].rank(pct=True)
+            df["percentile_rank"] = df["scores"].rank(pct=True)
 
             return df
 
         else:
-            raise ValueError("Unsupported model type. "
-                             "Only RandomForestClassificationModel, "
-                             "RandomForestRegressionModel, and LinearSVCModel are supported.")
+            raise ValueError(
+                "Unsupported model type. "
+                "Only RandomForestClassificationModel, "
+                "RandomForestRegressionModel, and LinearSVCModel are supported."
+            )
 
     def get_eval_metric_on_training(self) -> float:
         """
@@ -347,7 +406,9 @@ class MLCVModel:
         # get the eval metric name from the evaluator
         eval_metric_name = self.get_eval_metric_name()
 
-        if isinstance(best_model, (RandomForestClassificationModel, LogisticRegressionModel)):
+        if isinstance(
+            best_model, (RandomForestClassificationModel, LogisticRegressionModel)
+        ):
             metric_value = getattr(best_model.summary, eval_metric_name)
 
         elif isinstance(best_model, LinearSVCModel):
@@ -378,7 +439,10 @@ class MLCVModel:
 
         # predict the test data
         predictions = None
-        if isinstance(best_model, (RandomForestClassificationModel, LinearSVCModel, LogisticRegressionModel)):
+        if isinstance(
+            best_model,
+            (RandomForestClassificationModel, LinearSVCModel, LogisticRegressionModel),
+        ):
             predictions = best_model.transform(test_data.get_sdf_vector())
 
         metric_value = None

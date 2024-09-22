@@ -7,7 +7,13 @@ import pandas as pd
 import psutil
 from pandas import DataFrame
 from scipy import sparse
-from sklearn.preprocessing import MinMaxScaler, MaxAbsScaler, StandardScaler, RobustScaler, LabelEncoder
+from sklearn.preprocessing import (
+    MinMaxScaler,
+    MaxAbsScaler,
+    StandardScaler,
+    RobustScaler,
+    LabelEncoder,
+)
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("pickfeat")
@@ -30,13 +36,16 @@ class FSDataFrame:
     [...]
 
     """
+
     def __init__(
-            self,
-            df: pd.DataFrame,
-            sample_col: Optional[str] = None,
-            label_col: Optional[str] = None,
-            sparse_threshold: float = 0.7,  # Threshold for sparsity
-            memory_threshold: Optional[float] = 0.75  # Proportion of system memory to use for dense arrays
+        self,
+        df: pd.DataFrame,
+        sample_col: Optional[str] = None,
+        label_col: Optional[str] = None,
+        sparse_threshold: float = 0.7,  # Threshold for sparsity
+        memory_threshold: Optional[
+            float
+        ] = 0.75,  # Proportion of system memory to use for dense arrays
     ):
         """
         Create an instance of FSDataFrame.
@@ -60,7 +69,9 @@ class FSDataFrame:
         # Handle sample column
         if sample_col:
             if sample_col not in df.columns:
-                raise ValueError(f"Sample column '{sample_col}' not found in DataFrame.")
+                raise ValueError(
+                    f"Sample column '{sample_col}' not found in DataFrame."
+                )
             self.__sample_col = sample_col
             self.__samples = df[sample_col].tolist()
             columns_to_drop.append(sample_col)
@@ -105,19 +116,27 @@ class FSDataFrame:
         if sparsity > sparse_threshold:
             if dense_matrix_size < memory_threshold * available_memory:
                 # Use dense matrix if enough memory is available
-                logging.info(f"Data is sparse (sparsity={sparsity:.2f}) but enough memory available. "
-                             f"Using a dense matrix.")
+                logging.info(
+                    f"Data is sparse (sparsity={sparsity:.2f}) but enough memory available. "
+                    f"Using a dense matrix."
+                )
                 self.__matrix = numerical_df.to_numpy(dtype=np.float32)
                 self.__is_sparse = False
             else:
                 # Use sparse matrix due to memory constraints
-                logging.info(f"Data is sparse (sparsity={sparsity:.2f}), memory insufficient for dense matrix. "
-                             f"Using a sparse matrix representation.")
-                self.__matrix = sparse.csr_matrix(numerical_df.to_numpy(dtype=np.float32))
+                logging.info(
+                    f"Data is sparse (sparsity={sparsity:.2f}), memory insufficient for dense matrix. "
+                    f"Using a sparse matrix representation."
+                )
+                self.__matrix = sparse.csr_matrix(
+                    numerical_df.to_numpy(dtype=np.float32)
+                )
                 self.__is_sparse = True
         else:
             # Use dense matrix since it's not sparse
-            logging.info(f"Data is not sparse (sparsity={sparsity:.2f}), using a dense matrix.")
+            logging.info(
+                f"Data is not sparse (sparsity={sparsity:.2f}), using a dense matrix."
+            )
             self.__matrix = numerical_df.to_numpy(dtype=np.float32)
             self.__is_sparse = False
 
@@ -159,7 +178,7 @@ class FSDataFrame:
         """
         return self.__matrix.shape[0]
 
-    def scale_features(self, scaler_method: str = 'standard', **kwargs) -> bool:
+    def scale_features(self, scaler_method: str = "standard", **kwargs) -> bool:
         """
         Scales features in the SDataFrame using a specified method.
 
@@ -167,16 +186,18 @@ class FSDataFrame:
         :return: FSDataFrame with scaled features.
         """
 
-        if scaler_method == 'min_max':
+        if scaler_method == "min_max":
             scaler = MinMaxScaler(**kwargs)
-        elif scaler_method == 'max_abs':
+        elif scaler_method == "max_abs":
             scaler = MaxAbsScaler(**kwargs)
-        elif scaler_method == 'standard':
+        elif scaler_method == "standard":
             scaler = StandardScaler(**kwargs)
-        elif scaler_method == 'robust':
+        elif scaler_method == "robust":
             scaler = RobustScaler(**kwargs)
         else:
-            raise ValueError("`scaler_method` must be one of: min_max, max_abs, standard or robust.")
+            raise ValueError(
+                "`scaler_method` must be one of: min_max, max_abs, standard or robust."
+            )
 
         # TODO: Scale only the features for now, we have to investigate if we scale categorical variables
         self.__matrix = scaler.fit_transform(self.__matrix)
@@ -192,7 +213,7 @@ class FSDataFrame:
     def is_sparse(self):
         return self.__is_sparse
 
-    def select_features_by_index(self, feature_indexes: List[int]) -> 'FSDataFrame':
+    def select_features_by_index(self, feature_indexes: List[int]) -> "FSDataFrame":
         """
         Keep only the specified features (by index) and return an updated instance of FSDataFrame.
 
@@ -216,7 +237,9 @@ class FSDataFrame:
         updated_df[self.__label_col] = self.__labels
 
         # Return a new instance of FSDataFrame with the updated data
-        return FSDataFrame(updated_df, sample_col=self.__sample_col, label_col=self.__label_col)
+        return FSDataFrame(
+            updated_df, sample_col=self.__sample_col, label_col=self.__label_col
+        )
 
     def to_pandas(self) -> DataFrame:
         """
@@ -241,9 +264,9 @@ class FSDataFrame:
 
         return df
 
-    def split_df(self,
-                 label_type_cat: bool = True,
-                 split_training_factor: float = 0.7) -> Tuple['FSDataFrame', 'FSDataFrame']:
+    def split_df(
+        self, label_type_cat: bool = True, split_training_factor: float = 0.7
+    ) -> Tuple["FSDataFrame", "FSDataFrame"]:
         """
         Split DataFrame into training and test dataset.
         It will generate a nearly class-balanced training
@@ -284,4 +307,3 @@ class FSDataFrame:
         #
         # # Return the updated DataFrames
         # return self.update(train_df), self.update(test_df)
-

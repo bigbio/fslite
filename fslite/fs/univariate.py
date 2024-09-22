@@ -32,7 +32,9 @@ def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
     }
 
 
-def univariate_correlation_selector(df: FSDataFrame, corr_threshold: float = 0.3) -> List[int]:
+def univariate_correlation_selector(
+        df: FSDataFrame, corr_threshold: float = 0.3
+) -> List[int]:
     """
     Select features based on their correlation with a label (class), if the correlation value is less than the specified
     threshold.
@@ -43,12 +45,22 @@ def univariate_correlation_selector(df: FSDataFrame, corr_threshold: float = 0.3
     :return: List of selected feature indices
     """
     correlations = compute_univariate_corr(df)
-    selected_features = [feature_index for feature_index, corr in correlations.items() if corr <= corr_threshold]
+    selected_features = [
+        feature_index
+        for feature_index, corr in correlations.items()
+        if corr <= corr_threshold
+    ]
     return selected_features
 
 
-def univariate_selector(df: pd.DataFrame, features: List[str], label: str, label_type: str = 'categorical',
-                        selection_mode: str = 'percentile', selection_threshold: float = 0.8) -> List[str]:
+def univariate_selector(
+        df: pd.DataFrame,
+        features: List[str],
+        label: str,
+        label_type: str = "categorical",
+        selection_mode: str = "percentile",
+        selection_threshold: float = 0.8,
+) -> List[str]:
     """
     Wrapper for scikit-learn's `SelectKBest` feature selector.
     If the label is categorical, ANOVA test is used; if continuous, F-regression test is used.
@@ -66,20 +78,24 @@ def univariate_selector(df: pd.DataFrame, features: List[str], label: str, label
     X = df[features].values
     y = df[label].values
 
-    if label_type == 'categorical':
+    if label_type == "categorical":
         logger.info("ANOVA (F-classification) univariate feature selection")
         selector = SelectKBest(score_func=f_classif)
-    elif label_type == 'continuous':
+    elif label_type == "continuous":
         logger.info("F-value (F-regression) univariate feature selection")
         selector = SelectKBest(score_func=f_regression)
     else:
         raise ValueError("`label_type` must be one of 'categorical' or 'continuous'")
 
-    if selection_mode == 'percentile':
-        selector.set_params(k='all')  # We'll handle the percentile threshold manually
+    if selection_mode == "percentile":
+        selector.set_params(k="all")  # We'll handle the percentile threshold manually
         selector.fit(X, y)
         scores = selector.scores_
-        selected_indices = [i for i, score in enumerate(scores) if score >= selection_threshold * max(scores)]
+        selected_indices = [
+            i
+            for i, score in enumerate(scores)
+            if score >= selection_threshold * max(scores)
+        ]
     else:
         selector.set_params(k=int(selection_threshold))
         selector.fit(X, y)
@@ -89,9 +105,9 @@ def univariate_selector(df: pd.DataFrame, features: List[str], label: str, label
     return selected_features
 
 
-def univariate_filter(df: FSDataFrame,
-                      univariate_method: str = 'u_corr',
-                      **kwargs) -> FSDataFrame:
+def univariate_filter(
+        df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
+) -> FSDataFrame:
     """
     Filter features after applying a univariate feature selector method.
 
@@ -102,22 +118,24 @@ def univariate_filter(df: FSDataFrame,
     """
 
     if not is_valid_univariate_method(univariate_method):
-        raise NotImplementedError("The provided method {} is not implented !! please select one from this list {}".format(univariate_method, get_fs_univariate_methods()))
+        raise NotImplementedError(
+            "The provided method {} is not implemented !! please select one from this list {}".format(
+                univariate_method, get_fs_univariate_methods()
+            )
+        )
 
     selected_features = []
 
-    if univariate_method == 'anova':
+    if univariate_method == "anova":
         # TODO: Implement ANOVA selector
         # selected_features = univariate_selector(df, features, label, label_type='categorical', **kwargs)
         pass
-    elif univariate_method == 'f_regression':
+    elif univariate_method == "f_regression":
         # TODO: Implement F-regression selector
         # selected_features = univariate_selector(df, features, label, label_type='continuous', **kwargs)
         pass
-    elif univariate_method == 'u_corr':
+    elif univariate_method == "u_corr":
         selected_features = univariate_correlation_selector(df, **kwargs)
-    else:
-        raise ValueError(f"Univariate method {univariate_method} not supported.")
 
     logger.info(f"Applying univariate filter using method: {univariate_method}")
 

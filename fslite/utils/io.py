@@ -8,10 +8,9 @@ from fslite.config.context import PANDAS_ON_SPARK_API_SETTINGS
 warnings.filterwarnings("ignore")
 
 
-def import_table(path: str,
-                 header: bool = True,
-                 sep: str = "\t",
-                 n_partitions: int = 5) -> pyspark.sql.DataFrame:
+def import_table(
+    path: str, header: bool = True, sep: str = "\t", n_partitions: int = 5
+) -> pyspark.sql.DataFrame:
     """
     Import tsv file as Spark DataFrame.
 
@@ -28,19 +27,17 @@ def import_table(path: str,
     if _sc is None:
         raise ValueError("Active Spark Session not found...")
 
-    sdf = (_sc
-           .read
-           .option("delimiter", sep)
-           .option("header", header)
-           .option("inferSchema", "true")
-           .csv(path)
-           .repartition(n_partitions)
-           )
+    sdf = (
+        _sc.read.option("delimiter", sep)
+        .option("header", header)
+        .option("inferSchema", "true")
+        .csv(path)
+        .repartition(n_partitions)
+    )
     return sdf
 
 
-def import_parquet(path: str,
-                   header: bool = True) -> pyspark.sql.DataFrame:
+def import_parquet(path: str, header: bool = True) -> pyspark.sql.DataFrame:
     """
     Import parquet file as Spark DataFrame.
 
@@ -55,18 +52,13 @@ def import_parquet(path: str,
     if _sc is None:
         raise ValueError("Active Spark Session not found...")
 
-    sdf = (_sc
-           .read
-           .option("header", header)
-           .option("inferSchema", "true")
-           .parquet(path)
-           )
+    sdf = _sc.read.option("header", header).option("inferSchema", "true").parquet(path)
     return sdf
 
 
-def import_table_as_psdf(path: str,
-                         sep: str = "\t",
-                         n_partitions: int = 5) -> pyspark.pandas.DataFrame:
+def import_table_as_psdf(
+    path: str, sep: str = "\t", n_partitions: int = 5
+) -> pyspark.pandas.DataFrame:
     """
     Import tsv file as Pandas on Spark DataFrame
 
@@ -80,13 +72,10 @@ def import_table_as_psdf(path: str,
     import pyspark.pandas as ps
 
     # apply settings for pandas on spark api
-    [ps.set_option(k, PANDAS_ON_SPARK_API_SETTINGS.get(k))
-     for k in PANDAS_ON_SPARK_API_SETTINGS.keys()]
+    [
+        ps.set_option(k, PANDAS_ON_SPARK_API_SETTINGS.get(k))
+        for k in PANDAS_ON_SPARK_API_SETTINGS.keys()
+    ]
 
-    psdf = (ps
-            .read_csv(path,
-                      sep=sep)
-            .spark
-            .repartition(n_partitions)
-            )
+    psdf = ps.read_csv(path, sep=sep).spark.repartition(n_partitions)
     return psdf

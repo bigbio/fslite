@@ -3,10 +3,14 @@ from typing import List
 
 import numpy as np
 import pyspark
-from pyspark.ml.feature import (VarianceThresholdSelector)
+from pyspark.ml.feature import VarianceThresholdSelector
 from pyspark.ml.stat import Correlation
 
-from fslite.fs.constants import MULTIVARIATE_METHODS, MULTIVARIATE_CORRELATION, MULTIVARIATE_VARIANCE
+from fslite.fs.constants import (
+    MULTIVARIATE_METHODS,
+    MULTIVARIATE_CORRELATION,
+    MULTIVARIATE_VARIANCE,
+)
 
 from fslite.fs.core import FSDataFrame
 from fslite.fs.utils import find_maximal_independent_set
@@ -18,9 +22,11 @@ logger.setLevel(logging.INFO)
 
 
 @tag("experimental")
-def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
-                                features_col: str = 'features',
-                                corr_method: str = "pearson") -> np.ndarray:
+def _compute_correlation_matrix(
+    sdf: pyspark.sql.DataFrame,
+    features_col: str = "features",
+    corr_method: str = "pearson",
+) -> np.ndarray:
     """
     Compute features Matrix Correlation.
 
@@ -31,23 +37,23 @@ def _compute_correlation_matrix(sdf: pyspark.sql.DataFrame,
     :return: Numpy array.
     """
 
-    logger.warning("Warning: Computed matrix correlation will be collected into the drive with this implementation.\n"
-                   "This may cause memory issues. Use it preferably with small datasets.")
+    logger.warning(
+        "Warning: Computed matrix correlation will be collected into the drive with this implementation.\n"
+        "This may cause memory issues. Use it preferably with small datasets."
+    )
     logger.info(f"Computing correlation matrix using {corr_method} method.")
 
-    mcorr = (Correlation
-             .corr(sdf, features_col, corr_method)
-             .collect()[0][0]
-             .toArray()
-             )
+    mcorr = Correlation.corr(sdf, features_col, corr_method).collect()[0][0].toArray()
     return mcorr
 
 
 @tag("experimental")
-def multivariate_correlation_selector(fsdf: FSDataFrame,
-                                      strict: bool = True,
-                                      corr_threshold: float = 0.75,
-                                      corr_method: str = "pearson") -> List[str]:
+def multivariate_correlation_selector(
+    fsdf: FSDataFrame,
+    strict: bool = True,
+    corr_threshold: float = 0.75,
+    corr_method: str = "pearson",
+) -> List[str]:
     """
     Compute the correlation matrix (Pearson) among input features and select those below a specified threshold.
 
@@ -61,17 +67,21 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
     :return: List of selected features names
     """
 
-    colum_vector_features = 'features'
+    colum_vector_features = "features"
     sdf = fsdf.get_sdf_vector(output_column_vector=colum_vector_features)
 
     # compute correlation matrix
-    mcorr = _compute_correlation_matrix(sdf,
-                                        features_col=colum_vector_features,
-                                        corr_method=corr_method)
+    mcorr = _compute_correlation_matrix(
+        sdf, features_col=colum_vector_features, corr_method=corr_method
+    )
 
     mcorr = np.abs(mcorr)  # get absolute correlation value
-    combs_above_cutoff = np.triu(mcorr, k=1) > corr_threshold  # create bool matrix that meet criteria
-    correlated_col_index = tuple(np.column_stack(np.where(combs_above_cutoff)))  # get correlated pairs cols index
+    combs_above_cutoff = (
+        np.triu(mcorr, k=1) > corr_threshold
+    )  # create bool matrix that meet criteria
+    correlated_col_index = tuple(
+        np.column_stack(np.where(combs_above_cutoff))
+    )  # get correlated pairs cols index
 
     index_to_remove = set()
     if strict:
@@ -94,8 +104,9 @@ def multivariate_correlation_selector(fsdf: FSDataFrame,
 
 
 @tag("spark implementation")
-def multivariate_variance_selector(fsdf: FSDataFrame,
-                                   variance_threshold: float = 0.0) -> List[str]:
+def multivariate_variance_selector(
+    fsdf: FSDataFrame, variance_threshold: float = 0.0
+) -> List[str]:
     """
     Select features after removing low-variance ones (e.g., features with quasi-constant value across samples).
 
@@ -105,15 +116,15 @@ def multivariate_variance_selector(fsdf: FSDataFrame,
     :return: List of selected features names
     """
 
-    colum_vector_features = 'features'
+    colum_vector_features = "features"
     sdf = fsdf.get_sdf_vector(output_column_vector=colum_vector_features)
 
     selector = VarianceThresholdSelector()
-    (selector
-     .setFeaturesCol(colum_vector_features)
-     .setOutputCol("selectedFeatures")
-     .setVarianceThreshold(variance_threshold)
-     )
+    (
+        selector.setFeaturesCol(colum_vector_features)
+        .setOutputCol("selectedFeatures")
+        .setVarianceThreshold(variance_threshold)
+    )
 
     model = selector.fit(sdf)
     selected_features_indices = set(model.selectedFeatures)
@@ -122,9 +133,9 @@ def multivariate_variance_selector(fsdf: FSDataFrame,
     return selected_features
 
 
-def multivariate_filter(fsdf: FSDataFrame,
-                        multivariate_method: str = 'm_corr',
-                        **kwargs) -> FSDataFrame:
+def multivariate_filter(
+    fsdf: FSDataFrame, multivariate_method: str = "m_corr", **kwargs
+) -> FSDataFrame:
     """
      Filter features after applying a multivariate feature selector method.
 
@@ -139,8 +150,10 @@ def multivariate_filter(fsdf: FSDataFrame,
     elif multivariate_method == MULTIVARIATE_VARIANCE:
         selected_features = multivariate_variance_selector(fsdf, **kwargs)
     else:
-        raise ValueError(f"Invalid multivariate method: {multivariate_method}. "
-                         f"Choose one of {MULTIVARIATE_METHODS.keys()}.")
+        raise ValueError(
+            f"Invalid multivariate method: {multivariate_method}. "
+            f"Choose one of {MULTIVARIATE_METHODS.keys()}."
+        )
 
     logger.info(f"Applying multivariate filter {multivariate_method}.")
 

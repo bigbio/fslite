@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Union, Tuple, Optional, Dict, Any
 
-from fslite.fs.constants import (ML_METHODS, UNIVARIATE_METHODS,
-                                 MULTIVARIATE_METHODS)
+from fslite.fs.constants import ML_METHODS, UNIVARIATE_METHODS, MULTIVARIATE_METHODS
 from fslite.fs.core import FSDataFrame
 from fslite.fs.ml import MLCVModel
 from fslite.fs.multivariate import multivariate_filter
@@ -16,12 +15,10 @@ class FSMethod(ABC):
 
     valid_methods: Tuple[str]
 
-    def __init__(self,
-                 fs_method,
-                 **kwargs):
+    def __init__(self, fs_method, **kwargs):
         """
         Initialize the feature selection method with the specified parameters.
-        
+
         :param fs_method: The feature selection method to be used.
         :param kwargs: Additional keyword arguments for the feature selection method.
         """
@@ -140,9 +137,7 @@ class FSUnivariate(FSMethod):
             The selected features.
         """
 
-        return univariate_filter(
-            fsdf, univariate_method=self.fs_method, **self.kwargs
-        )
+        return univariate_filter(fsdf, univariate_method=self.fs_method, **self.kwargs)
 
     def __str__(self):
         return f"FSUnivariate(method={self.fs_method}, kwargs={self.kwargs})"
@@ -233,12 +228,14 @@ class FSMLMethod(FSMethod):
     valid_methods = list(ML_METHODS.keys())
     _ml_model: MLCVModel = None
 
-    def __init__(self,
-                 fs_method: str,
-                 rfe: bool = False,
-                 rfe_iterations: int = 3,
-                 percent_to_keep: float = 0.90,
-                 **kwargs):
+    def __init__(
+        self,
+        fs_method: str,
+        rfe: bool = False,
+        rfe_iterations: int = 3,
+        percent_to_keep: float = 0.90,
+        **kwargs,
+    ):
         """
         Initialize the machine learning feature selection method with the specified parameters.
 
@@ -251,10 +248,14 @@ class FSMLMethod(FSMethod):
         self.validate_method(fs_method)
 
         # set the estimator, grid and cv parameters (or none if not provided)
-        self.estimator_params = kwargs.get('estimator_params', None)  # estimator parameters
-        self.evaluator_params = kwargs.get('evaluator_params', None)  # evaluator parameters
-        self.grid_params = kwargs.get('grid_params', None)  # grid parameters
-        self.cv_params = kwargs.get('cv_params', None)  # cross-validation parameters
+        self.estimator_params = kwargs.get(
+            "estimator_params", None
+        )  # estimator parameters
+        self.evaluator_params = kwargs.get(
+            "evaluator_params", None
+        )  # evaluator parameters
+        self.grid_params = kwargs.get("grid_params", None)  # grid parameters
+        self.cv_params = kwargs.get("cv_params", None)  # cross-validation parameters
 
         # set the machine learning model
         self._ml_model = self._set_ml_model()
@@ -265,7 +266,9 @@ class FSMLMethod(FSMethod):
         self.rfe_iterations = rfe_iterations
 
         # performance metrics
-        self.rfe_training_metric: list = []  # performance metrics on training for each rfe iteration
+        self.rfe_training_metric: list = (
+            []
+        )  # performance metrics on training for each rfe iteration
         self.training_metric = None  # performance metrics on training (final model)
         self.testing_metric = None  # performance metrics on testing (final model)
 
@@ -310,7 +313,7 @@ class FSMLMethod(FSMethod):
             estimator_params=self.estimator_params,
             evaluator_params=self.evaluator_params,
             grid_params=self.grid_params,
-            cv_params=self.cv_params
+            cv_params=self.cv_params,
         )
 
         return self._ml_model
@@ -326,8 +329,8 @@ class FSMLMethod(FSMethod):
         # get feature based on the (percentile) threshold provided
         # expected a dataframe sorted by scores in descending order
         selected_features = feature_scores.iloc[
-                            :int(self.percent_to_keep * len(feature_scores))
-                            ]['feature_index']
+            : int(self.percent_to_keep * len(feature_scores))
+        ]["feature_index"]
 
         return df.filter_features_by_index(selected_features, keep=True)
 
@@ -343,17 +346,23 @@ class FSMLMethod(FSMethod):
         """
 
         if fsdf is None or fsdf.count_features() == 0 or fsdf.count_instances() == 0:
-            raise ValueError("The data frame is empty or does not contain any features.")
+            raise ValueError(
+                "The data frame is empty or does not contain any features."
+            )
 
         fsdf = self._fit_and_filter(fsdf)
 
         # Recursive feature elimination
         if self.rfe:
             for iteration in range(self.rfe_iterations):
-                print(f"RFE: running {iteration + 1} of {self.rfe_iterations} iterations...")
+                print(
+                    f"RFE: running {iteration + 1} of {self.rfe_iterations} iterations..."
+                )
                 fsdf = self._fit_and_filter(fsdf)
                 # collect the performance metrics on training for every rfe iteration
-                self.rfe_training_metric.append(self._ml_model.get_eval_metric_on_training())
+                self.rfe_training_metric.append(
+                    self._ml_model.get_eval_metric_on_training()
+                )
 
         # get the final performance metric on training
         self.training_metric = self._ml_model.get_eval_metric_on_training()
@@ -384,7 +393,9 @@ class FSMLMethod(FSMethod):
             The evaluation metric on the training data for each RFE iteration.
         """
         if self.rfe_training_metric is None:
-            raise ValueError("No training metric is available. Run the select_features method first.")
+            raise ValueError(
+                "No training metric is available. Run the select_features method first."
+            )
         return self.rfe_training_metric
 
     def get_eval_metric_on_training(self):
@@ -395,7 +406,9 @@ class FSMLMethod(FSMethod):
             The evaluation metric on the training data.
         """
         if self.training_metric is None:
-            raise ValueError("No training metric is available. Run the select_features method first.")
+            raise ValueError(
+                "No training metric is available. Run the select_features method first."
+            )
         return self.training_metric
 
     def get_eval_metric_on_testing(self, fsdf: FSDataFrame):
@@ -410,7 +423,9 @@ class FSMLMethod(FSMethod):
         """
 
         if fsdf is None or fsdf.count_features() == 0 or fsdf.count_instances() == 0:
-            raise ValueError("The testing data frame is empty or does not contain any features.")
+            raise ValueError(
+                "The testing data frame is empty or does not contain any features."
+            )
 
         # evaluate the model on the testing data
         eval_metric = self._ml_model.get_eval_metric_on_testing(fsdf)
@@ -427,7 +442,9 @@ class FSMLMethod(FSMethod):
         """
 
         if self.feature_scores is None:
-            raise ValueError("Feature scores are not available. Run the feature selection method first.")
+            raise ValueError(
+                "Feature scores are not available. Run the feature selection method first."
+            )
 
         return self.feature_scores
 
@@ -452,14 +469,18 @@ class FSPipeline:
     selected_features = fs_pipeline.select_features(fsdf)
     """
 
-    _valid_methods: List[Type[Union[FSUnivariate, FSMultivariate, FSMLMethod]]] = [FSUnivariate,
-                                                                                   FSMultivariate,
-                                                                                   FSMLMethod]
+    _valid_methods: List[Type[Union[FSUnivariate, FSMultivariate, FSMLMethod]]] = [
+        FSUnivariate,
+        FSMultivariate,
+        FSMLMethod,
+    ]
 
-    def __init__(self,
-                 df_training: FSDataFrame,
-                 df_testing: Optional[FSDataFrame],
-                 fs_stages: List[Union[FSUnivariate, FSMultivariate, FSMLMethod]]):
+    def __init__(
+        self,
+        df_training: FSDataFrame,
+        df_testing: Optional[FSDataFrame],
+        fs_stages: List[Union[FSUnivariate, FSMultivariate, FSMLMethod]],
+    ):
         """
         Initialize the feature selection pipeline with the specified feature selection methods.
 
@@ -482,15 +503,23 @@ class FSPipeline:
         """
         # check if the pipeline contains at least one feature selection method
         if len(self.fs_stages) == 0:
-            raise ValueError("The pipeline must contain at least one feature selection method.")
+            raise ValueError(
+                "The pipeline must contain at least one feature selection method."
+            )
 
         # check if the feature selection methods are valid
-        if not all(isinstance(method, tuple(self._valid_methods)) for method in self.fs_stages):
-            raise InvalidMethodError(f"Invalid feature selection method. "
-                                     f"Accepted methods are {', '.join([str(m) for m in self._valid_methods])}")
+        if not all(
+            isinstance(method, tuple(self._valid_methods)) for method in self.fs_stages
+        ):
+            raise InvalidMethodError(
+                f"Invalid feature selection method. "
+                f"Accepted methods are {', '.join([str(m) for m in self._valid_methods])}"
+            )
 
         # check if only one ML method is used in the pipeline
-        ml_methods = [method for method in self.fs_stages if isinstance(method, FSMLMethod)]
+        ml_methods = [
+            method for method in self.fs_stages if isinstance(method, FSMLMethod)
+        ]
         if len(ml_methods) > 1:
             raise ValueError("Only one ML method is allowed in the pipeline.")
 
@@ -509,7 +538,9 @@ class FSPipeline:
         self.pipeline_results.update(n_stages=n_stages)
 
         for i, method in enumerate(self.fs_stages):
-            print(f"Running stage {i + 1} of {n_stages} of the feature selection pipeline: {method}")
+            print(
+                f"Running stage {i + 1} of {n_stages} of the feature selection pipeline: {method}"
+            )
             if isinstance(method, FSMLMethod):
 
                 fsdf_tmp = method.select_features(fsdf_tmp)
@@ -518,8 +549,12 @@ class FSPipeline:
                 self.pipeline_results.update(rfe_iterations=method.rfe_iterations)
                 self.pipeline_results.update(feature_scores=method.get_feature_scores())
                 self.pipeline_results.update(eval_metric=method.get_eval_metric_name())
-                self.pipeline_results.update(rfe_training_metric=method.get_eval_metric_on_training_rfe())
-                self.pipeline_results.update(training_metric=method.get_eval_metric_on_training())
+                self.pipeline_results.update(
+                    rfe_training_metric=method.get_eval_metric_on_training_rfe()
+                )
+                self.pipeline_results.update(
+                    training_metric=method.get_eval_metric_on_training()
+                )
 
                 if self.df_testing is not None:
 
@@ -530,7 +565,9 @@ class FSPipeline:
             else:
                 fsdf_tmp = method.select_features(fsdf_tmp)
 
-        self.pipeline_results.update(n_initial_features=self.df_training.count_features())
+        self.pipeline_results.update(
+            n_initial_features=self.df_training.count_features()
+        )
         self.pipeline_results.update(n_selected_features=fsdf_tmp.count_features())
 
         return self.pipeline_results

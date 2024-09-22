@@ -4,7 +4,11 @@ import numpy as np
 
 from fslite.config.context import init_spark, stop_spark_session
 from fslite.fs.core import FSDataFrame
-from fslite.fs.utils import compute_missingness_rate, remove_features_by_missingness_rate, impute_missing
+from fslite.fs.utils import (
+    compute_missingness_rate,
+    remove_features_by_missingness_rate,
+    impute_missing,
+)
 from fslite.utils.datasets import get_tnbc_data_missing_values_path
 from fslite.utils.io import import_table_as_psdf
 
@@ -16,9 +20,11 @@ class TestDataPreprocessing(unittest.TestCase):
     """
 
     def setUp(self) -> None:
-        init_spark(apply_pyarrow_settings=True,
-                   apply_extra_spark_settings=True,
-                   apply_pandas_settings=True)
+        init_spark(
+            apply_pyarrow_settings=True,
+            apply_extra_spark_settings=True,
+            apply_pandas_settings=True,
+        )
 
     def tearDown(self) -> None:
         stop_spark_session()
@@ -32,7 +38,7 @@ class TestDataPreprocessing(unittest.TestCase):
         :return:
         """
         df = import_table_as_psdf(get_tnbc_data_missing_values_path(), n_partitions=5)
-        fsdf = FSDataFrame(df, sample_col='Sample', label_col='label')
+        fsdf = FSDataFrame(df, sample_col="Sample", label_col="label")
         return fsdf
 
     def test_compute_missingness_rate(self):
@@ -43,8 +49,8 @@ class TestDataPreprocessing(unittest.TestCase):
 
         fsdf = self.import_FSDataFrame()
         features_missing_rates = compute_missingness_rate(fsdf)
-        self.assertEqual(features_missing_rates.get('tr|E9PBJ4'), 0.0)
-        self.assertAlmostEqual(features_missing_rates.get('sp|P07437'), 0.295, places=2)
+        self.assertEqual(features_missing_rates.get("tr|E9PBJ4"), 0.0)
+        self.assertAlmostEqual(features_missing_rates.get("sp|P07437"), 0.295, places=2)
 
     def test_filter_by_missingness_rate(self):
         """
@@ -66,7 +72,7 @@ class TestDataPreprocessing(unittest.TestCase):
         """
 
         fsdf = self.import_FSDataFrame()
-        fsdf = impute_missing(fsdf, strategy='mean')
+        fsdf = impute_missing(fsdf, strategy="mean")
 
         # Collect features as array
         array = fsdf._collect_features_as_array()
@@ -75,5 +81,5 @@ class TestDataPreprocessing(unittest.TestCase):
         self.assertFalse(np.isnan(array).any())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

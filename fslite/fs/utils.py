@@ -30,7 +30,8 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     missing_rates = sdf.select(
         [
             (
-                    f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n_instances
+                f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0))
+                / n_instances
             ).alias(c)
             for c in features
         ]
@@ -40,7 +41,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
 
 
 def remove_features_by_missingness_rate(
-        fsdf: FSDataFrame, threshold: float = 0.15
+    fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
@@ -107,7 +108,9 @@ def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[in
 
     :return: Set of indices (maximal independent set or remaining indices).
     """
-    logger.warning("This method is experimental and have been not extensively tested...")
+    logger.warning(
+        "This method is experimental and have been not extensively tested..."
+    )
 
     graph = nx.Graph()
     graph.add_edges_from(pairs)

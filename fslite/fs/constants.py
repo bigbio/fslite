@@ -1,72 +1,52 @@
 """
 This file contains a list of constants used in the feature selection and machine learning methods.
 """
+
 from typing import Dict, List, Union
 
 FS_METHODS = {
-    'univariate': {
-        "title": 'Univariate Feature Selection',
+    "univariate": {
+        "title": "Univariate Feature Selection",
         "methods": [
             {
-                'name': 'anova',
-                'description': 'Univariate ANOVA feature selection (f-classification)'
+                "name": "anova",
+                "description": "Univariate ANOVA feature selection (f-classification)",
             },
-            {
-                'name': 'u_corr',
-                'description': 'Univariate correlation'
-            },
-            {
-                'name': 'f_regression',
-                'description': 'Univariate f-regression'
-            }
-        ]
+            {"name": "u_corr", "description": "Univariate correlation"},
+            {"name": "f_regression", "description": "Univariate f-regression"},
+        ],
     },
-    'multivariate': {
-        "title": 'Multivariate Feature Selection',
+    "multivariate": {
+        "title": "Multivariate Feature Selection",
         "methods": [
-            {
-                'name': 'm_corr',
-                'description': 'Multivariate Correlation'
-            },
-            {
-                'name': 'variance',
-                'description': 'Multivariate Variance'
-            }
-        ]
+            {"name": "m_corr", "description": "Multivariate Correlation"},
+            {"name": "variance", "description": "Multivariate Variance"},
+        ],
     },
-    'ml': {
-        "title": 'Machine Learning Wrapper',
+    "ml": {
+        "title": "Machine Learning Wrapper",
         "methods": [
+            {"name": "rf_binary", "description": "Random Forest Binary Classifier"},
+            {"name": "lsvc_binary", "description": "Linear SVC Binary Classifier"},
             {
-                'name': 'rf_binary',
-                'description': 'Random Forest Binary Classifier'
+                "name": "fm_binary",
+                "description": "Factorization Machine Binary Classifier",
             },
             {
-                'name': 'lsvc_binary',
-                'description': 'Linear SVC Binary Classifier'
+                "name": "rf_multilabel",
+                "description": "Random Forest Multi-label Classifier",
             },
             {
-                'name': 'fm_binary',
-                'description': 'Factorization Machine Binary Classifier'
+                "name": "lg_multilabel",
+                "description": "Logistic Regression Multi-label Classifier",
             },
+            {"name": "rf_regression", "description": "Random Forest Regression"},
             {
-                'name': 'rf_multilabel',
-                'description': 'Random Forest Multi-label Classifier'
+                "name": "fm_regression",
+                "description": "Factorization Machine Regression",
             },
-            {
-                'name': 'lg_multilabel',
-                'description': 'Logistic Regression Multi-label Classifier'
-            },
-            {
-                'name': 'rf_regression',
-                'description': 'Random Forest Regression'
-            },
-            {
-                'name': 'fm_regression',
-                'description': 'Factorization Machine Regression'
-            }
-        ]
-    }
+        ],
+    },
 }
 
 
@@ -76,6 +56,7 @@ def get_fs_methods():
     :return: dict
     """
     return FS_METHODS
+
 
 def get_fs_method_details(method_name: str) -> Union[Dict, None]:
     """
@@ -87,19 +68,19 @@ def get_fs_method_details(method_name: str) -> Union[Dict, None]:
     """
 
     for method_type in FS_METHODS:
-        for method in FS_METHODS[method_type]['methods']:
-            if method['name'].lower() == method_name.lower():
+        for method in FS_METHODS[method_type]["methods"]:
+            if method["name"].lower() == method_name.lower():
                 return method
     return None
+
 
 def get_fs_univariate_methods() -> List:
     """
     Get the list of univariate methods implemented in the library
     :return: list
     """
-    univariate_methods = FS_METHODS['univariate']
-    univariate_names = [method["name"] for method in univariate_methods["methods"]]
-    return univariate_names
+    return get_fs_method_by_class["univariate"]
+
 
 def is_valid_univariate_method(method_name: str) -> bool:
     """
@@ -113,3 +94,12 @@ def is_valid_univariate_method(method_name: str) -> bool:
     return False
 
 
+def get_fs_method_by_class(fs_class: str) -> List:
+    """
+    Get the FS method supported for a given FS class, for example, univariate
+    :param fs_class
+    :return FS List
+    """
+    fs_methods = FS_METHODS[fs_class]
+    fs_names = [method["name"] for method in fs_methods["methods"]]
+    return fs_names
