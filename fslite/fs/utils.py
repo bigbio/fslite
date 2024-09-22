@@ -2,11 +2,10 @@ import logging
 from typing import Dict, Tuple, Set
 
 import networkx as nx
-import pyspark.sql.functions as f
 from networkx.algorithms.mis import maximal_independent_set
-from pyspark.ml.feature import Imputer
+from sklearn.impute import SimpleImputer
 
-from fslite.fs.core import FSDataFrame
+from fslite.fs.fdataframe import FSDataFrame
 from fslite.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
@@ -27,17 +26,17 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     n_instances = fsdf.count_instances()  # number of instances/samples.
     features = fsdf.get_features_names()  # list of features (column) names
 
-    missing_rates = sdf.select(
-        [
-            (
-                f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0))
-                / n_instances
-            ).alias(c)
-            for c in features
-        ]
-    )
+    # missing_rates = sdf.select(
+    #     [
+    #         (
+    #             f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0))
+    #             / n_instances
+    #         ).alias(c)
+    #         for c in features
+    #     ]
+    # )
 
-    return missing_rates.first().asDict()
+    # return missing_rates.first().asDict()
 
 
 def remove_features_by_missingness_rate(
@@ -79,7 +78,7 @@ def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
     col_features = fsdf.get_features_names()
 
     sdf_imputed = (
-        Imputer()
+        SimpleImputer()
         .setStrategy(strategy)
         .setInputCols(col_features)
         .setOutputCols(col_features)

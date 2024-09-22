@@ -1,8 +1,8 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Union, Tuple, Optional, Dict, Any
 
-from fslite.fs.constants import ML_METHODS, UNIVARIATE_METHODS, MULTIVARIATE_METHODS
-from fslite.fs.core import FSDataFrame
+from fslite.fs.constants import FS_METHODS, get_fs_multivariate_methods, get_fs_ml_methods
+from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.ml import MLCVModel
 from fslite.fs.multivariate import multivariate_filter
 from fslite.fs.univariate import univariate_filter
@@ -88,7 +88,7 @@ class FSUnivariate(FSMethod):
         kwargs (dict): Additional keyword arguments for the feature selection method.
     """
 
-    valid_methods = list(UNIVARIATE_METHODS.keys())
+    valid_methods = list(FS_METHODS.keys())
 
     def __init__(self, fs_method: str, **kwargs):
         """
@@ -161,7 +161,7 @@ class FSMultivariate(FSMethod):
     selected_features = fs_multivariate.select_features(fsdf)
     """
 
-    valid_methods = list(MULTIVARIATE_METHODS.keys())
+    valid_methods = list(get_fs_multivariate_methods())
 
     def __init__(self, fs_method: str, **kwargs):
         """
@@ -225,7 +225,7 @@ class FSMLMethod(FSMethod):
         kwargs (dict): Additional keyword arguments for the feature selection method.
     """
 
-    valid_methods = list(ML_METHODS.keys())
+    valid_methods = list(get_fs_ml_methods())
     _ml_model: MLCVModel = None
 
     def __init__(

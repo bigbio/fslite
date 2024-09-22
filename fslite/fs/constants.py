@@ -79,7 +79,13 @@ def get_fs_univariate_methods() -> List:
     Get the list of univariate methods implemented in the library
     :return: list
     """
-    return get_fs_method_by_class["univariate"]
+    return get_fs_method_by_class("univariate")
+
+def get_fs_multivariate_methods() -> List:
+    return get_fs_method_by_class("multivariate")
+
+def get_fs_ml_methods() -> List:
+    return get_fs_method_by_class("ml")
 
 
 def is_valid_univariate_method(method_name: str) -> bool:
