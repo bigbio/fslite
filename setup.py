@@ -22,6 +22,7 @@ setup(
         "pyarrow",
         "scikit-learn",
         "scipy",
+        "psutil",
     ],
     classifiers=[
         # Classifiers for your package
