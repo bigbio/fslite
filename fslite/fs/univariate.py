@@ -33,7 +33,7 @@ def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
 
 
 def univariate_correlation_selector(
-        df: FSDataFrame, corr_threshold: float = 0.3
+    df: FSDataFrame, corr_threshold: float = 0.3
 ) -> List[int]:
     """
     Select features based on their correlation with a label (class), if the correlation value is less than the specified
@@ -54,12 +54,12 @@ def univariate_correlation_selector(
 
 
 def univariate_selector(
-        df: pd.DataFrame,
-        features: List[str],
-        label: str,
-        label_type: str = "categorical",
-        selection_mode: str = "percentile",
-        selection_threshold: float = 0.8,
+    df: pd.DataFrame,
+    features: List[str],
+    label: str,
+    label_type: str = "categorical",
+    selection_mode: str = "percentile",
+    selection_threshold: float = 0.8,
 ) -> List[str]:
     """
     Wrapper for scikit-learn's `SelectKBest` feature selector.
@@ -106,7 +106,7 @@ def univariate_selector(
 
 
 def univariate_filter(
-        df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
+    df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
 ) -> FSDataFrame:
     """
     Filter features after applying a univariate feature selector method.

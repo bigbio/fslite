@@ -81,8 +81,10 @@ def get_fs_univariate_methods() -> List:
     """
     return get_fs_method_by_class("univariate")
 
+
 def get_fs_multivariate_methods() -> List:
     return get_fs_method_by_class("multivariate")
+
 
 def get_fs_ml_methods() -> List:
     return get_fs_method_by_class("ml")

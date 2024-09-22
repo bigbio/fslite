@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Union, Tuple, Optional, Dict, Any
 
-from fslite.fs.constants import FS_METHODS, get_fs_multivariate_methods, get_fs_ml_methods
+from fslite.fs.constants import (
+    FS_METHODS,
+    get_fs_multivariate_methods,
+    get_fs_ml_methods,
+)
 from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.ml import MLCVModel
 from fslite.fs.multivariate import multivariate_filter
