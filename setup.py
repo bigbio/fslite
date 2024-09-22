@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-    name='fsspark',
+    name='fslite',
     version='0.0.1',
     url='https://github.com/bigbio/fsspark',
     license='Apache-2.0',

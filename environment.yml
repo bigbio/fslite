@@ -1,4 +1,4 @@
-name: fsspark-venv
+name: fslite-venv
 channels:
   - defaults
   - conda-forge

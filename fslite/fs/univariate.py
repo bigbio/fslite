@@ -5,7 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 
-from fsspark.fs.fdataframe import FSDataFrame
+from fslite.fs.fdataframe import FSDataFrame
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FS:UNIVARIATE")

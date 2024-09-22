@@ -1,10 +1,10 @@
 import unittest
 
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.methods import FSPipeline, FSUnivariate, FSMultivariate, FSMLMethod
-from fsspark.utils.datasets import get_tnbc_data_path
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.fs.methods import FSPipeline, FSUnivariate, FSMultivariate, FSMLMethod
+from fslite.utils.datasets import get_tnbc_data_path
+from fslite.utils.io import import_table_as_psdf
 
 
 class FeatureSelectionPipelineTest(unittest.TestCase):

@@ -53,4 +53,4 @@ A typical workflow written using `fsspark` can be divided roughly in four major 
 
 ### 5. Feature selection pipeline example
 
-[FS pipeline example](../fsspark/pipeline/fs_pipeline_example.py)
+[FS pipeline example](../fslite/pipeline/fs_pipeline_example.py)

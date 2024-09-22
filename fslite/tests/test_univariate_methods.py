@@ -1,8 +1,8 @@
 import pandas as pd
-from fsspark.utils.datasets import get_tnbc_data_path
-from fsspark.fs.fdataframe import FSDataFrame
+from fslite.utils.datasets import get_tnbc_data_path
+from fslite.fs.fdataframe import FSDataFrame
 
-from fsspark.fs.univariate import univariate_filter
+from fslite.fs.univariate import univariate_filter
 
 def test_univariate_filter_corr():
     """

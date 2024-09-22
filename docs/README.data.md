@@ -37,19 +37,21 @@ The following is an example of a TSV file with a binary response variable:
 - `import_table` - Import data from a TSV file into a Spark Data Frame (sdf).
 
 ```python
-from fsspark.utils.io import import_table
-sdf = import_table('data.tsv.bgz', 
-                    sep='\t', 
-                    n_partitions=5)
+from fslite.utils.io import import_table
+
+sdf = import_table('data.tsv.bgz',
+                   sep='\t',
+                   n_partitions=5)
 ```
 
 - `import_table_as_psdf` - Import data from a TSV file into a Spark Data Frame (sdf) and 
 convert it into a Pandas on Spark Data Frame (psdf).
 
 ```python
-from fsspark.utils.io import import_table_as_psdf
-psdf = import_table_as_psdf('data.tsv.bgz', 
-                            sep='\t', 
+from fslite.utils.io import import_table_as_psdf
+
+psdf = import_table_as_psdf('data.tsv.bgz',
+                            sep='\t',
                             n_partitions=5)
 ```
 
@@ -73,9 +75,9 @@ contains the response variable.
 #### How to create a Feature Selection Spark Data Frame (FSDF)
 
 ```python
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.utils.io import import_table_as_psdf
 
 # Init spark
 init_spark()

@@ -1,16 +1,16 @@
 """
-Example of a feature selection pipeline implemented in fsspark.
+Example of a feature selection pipeline implemented in fslite.
 
 After data import and pre-processing, the pipeline applies univariate correlation filter,
 multivariate correlation filter and Randon Forest classification.
 
 """
 
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.methods import FSPipeline, FSUnivariate, FSMultivariate, FSMLMethod
-from fsspark.utils.datasets import get_tnbc_data_path
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.fs.methods import FSPipeline, FSUnivariate, FSMultivariate, FSMLMethod
+from fslite.utils.datasets import get_tnbc_data_path
+from fslite.utils.io import import_table_as_psdf
 
 # Init spark
 init_spark(apply_pyarrow_settings=True,

@@ -2,11 +2,11 @@ import unittest
 
 import numpy as np
 
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.utils import compute_missingness_rate, remove_features_by_missingness_rate, impute_missing
-from fsspark.utils.datasets import get_tnbc_data_missing_values_path
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.fs.utils import compute_missingness_rate, remove_features_by_missingness_rate, impute_missing
+from fslite.utils.datasets import get_tnbc_data_missing_values_path
+from fslite.utils.io import import_table_as_psdf
 
 
 class TestDataPreprocessing(unittest.TestCase):

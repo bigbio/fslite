@@ -20,15 +20,15 @@ from pyspark.ml.evaluation import (Evaluator,
 from pyspark.ml.regression import RandomForestRegressionModel, RandomForestRegressor
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder, CrossValidatorModel, Param
 
-from fsspark.fs.constants import (RF_BINARY,
-                                  LSVC_BINARY,
-                                  FM_BINARY,
-                                  RF_MULTILABEL,
-                                  LR_MULTILABEL,
-                                  RF_REGRESSION,
-                                  FM_REGRESSION,
-                                  ML_METHODS)
-from fsspark.fs.core import FSDataFrame
+from fslite.fs.constants import (RF_BINARY,
+                                 LSVC_BINARY,
+                                 FM_BINARY,
+                                 RF_MULTILABEL,
+                                 LR_MULTILABEL,
+                                 RF_REGRESSION,
+                                 FM_REGRESSION,
+                                 ML_METHODS)
+from fslite.fs.core import FSDataFrame
 
 ESTIMATORS_CLASSES = [RandomForestClassifier, RandomForestRegressionModel, LinearSVC, LogisticRegression]
 EVALUATORS_CLASSES = [BinaryClassificationEvaluator, MulticlassClassificationEvaluator, RegressionEvaluator]

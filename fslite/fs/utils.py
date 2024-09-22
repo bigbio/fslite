@@ -6,8 +6,8 @@ import pyspark.sql.functions as f
 from networkx.algorithms.mis import maximal_independent_set
 from pyspark.ml.feature import Imputer
 
-from fsspark.fs.core import FSDataFrame
-from fsspark.utils.generic import tag
+from fslite.fs.core import FSDataFrame
+from fslite.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:UTILS")

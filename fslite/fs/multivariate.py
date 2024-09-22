@@ -6,11 +6,11 @@ import pyspark
 from pyspark.ml.feature import (VarianceThresholdSelector)
 from pyspark.ml.stat import Correlation
 
-from fsspark.fs.constants import MULTIVARIATE_METHODS, MULTIVARIATE_CORRELATION, MULTIVARIATE_VARIANCE
+from fslite.fs.constants import MULTIVARIATE_METHODS, MULTIVARIATE_CORRELATION, MULTIVARIATE_VARIANCE
 
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.utils import find_maximal_independent_set
-from fsspark.utils.generic import tag
+from fslite.fs.core import FSDataFrame
+from fslite.fs.utils import find_maximal_independent_set
+from fslite.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:MULTIVARIATE")

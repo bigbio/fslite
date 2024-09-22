@@ -5,11 +5,11 @@ from pyspark.ml.classification import (RandomForestClassifier,
 from pyspark.ml.evaluation import (BinaryClassificationEvaluator,
                                    MulticlassClassificationEvaluator)
 
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.ml import MLCVModel
-from fsspark.utils.datasets import get_tnbc_data_path
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.fs.ml import MLCVModel
+from fslite.utils.datasets import get_tnbc_data_path
+from fslite.utils.io import import_table_as_psdf
 
 
 class MLMethodTest(unittest.TestCase):
@@ -145,7 +145,7 @@ class MLMethodTest(unittest.TestCase):
         assert testing_acc > 0.7
 
     def test_FSMLMethod(self):
-        from fsspark.fs.methods import FSMLMethod
+        from fslite.fs.methods import FSMLMethod
 
         fsdf = self.import_FSDataFrame()
         training_data, testing_data = fsdf.split_df(split_training_factor=0.7)

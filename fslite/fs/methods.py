@@ -1,12 +1,12 @@
 from abc import ABC, abstractmethod
 from typing import List, Type, Union, Tuple, Optional, Dict, Any
 
-from fsspark.fs.constants import (ML_METHODS, UNIVARIATE_METHODS,
-                                  MULTIVARIATE_METHODS)
-from fsspark.fs.core import FSDataFrame
-from fsspark.fs.ml import MLCVModel
-from fsspark.fs.multivariate import multivariate_filter
-from fsspark.fs.univariate import univariate_filter
+from fslite.fs.constants import (ML_METHODS, UNIVARIATE_METHODS,
+                                 MULTIVARIATE_METHODS)
+from fslite.fs.core import FSDataFrame
+from fslite.fs.ml import MLCVModel
+from fslite.fs.multivariate import multivariate_filter
+from fslite.fs.univariate import univariate_filter
 
 
 class FSMethod(ABC):
