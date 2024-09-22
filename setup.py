@@ -6,7 +6,7 @@ with open("README.md", "r") as fh:
 setup(
     name="fslite",
     version="0.0.1",
-    url="https://github.com/bigbio/fsspark",
+    url="https://github.com/bigbio/fslite",
     license="Apache-2.0",
     author="Enrique Audain Martinez",
     author_email="enrique.audain@gmail.com",
@@ -15,12 +15,13 @@ setup(
     long_description_content_type="text/markdown",
     packages=find_packages(),
     install_requires=[
-        "pyspark",
         "numpy",
         "networkx",
         "setuptools",
         "pandas",
         "pyarrow",
+        "scikit-learn",
+        "scipy",
     ],
     classifiers=[
         # Classifiers for your package
