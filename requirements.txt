@@ -7,3 +7,4 @@ scipy
 psutil
 pytest
 matplotlib
+memory-profiler

@@ -16,3 +16,4 @@ dependencies:
       - psutil
       - pytest
       - matplotlib
+      - memory-profiler
