@@ -1,6 +1,7 @@
 """
 This file contains a list of constants used in the feature selection and machine learning methods.
 """
+from typing import Dict, List, Union
 
 FS_METHODS = {
     'univariate': {
@@ -8,7 +9,15 @@ FS_METHODS = {
         "methods": [
             {
                 'name': 'anova',
-                'description': 'ANOVA univariate feature selection (F-classification)'
+                'description': 'Univariate ANOVA feature selection (f-classification)'
+            },
+            {
+                'name': 'u_corr',
+                'description': 'Univariate correlation'
+            },
+            {
+                'name': 'f_regression',
+                'description': 'Univariate f-regression'
             }
         ]
     },
@@ -68,7 +77,7 @@ def get_fs_methods():
     """
     return FS_METHODS
 
-def get_fs_method_details(method_name: str):
+def get_fs_method_details(method_name: str) -> Union[Dict, None]:
     """
     Get the details of the feature selection method, this function search in all-methods definitions
     and get the details of the method with the given name. If the method is not found, it returns None.
@@ -82,3 +91,25 @@ def get_fs_method_details(method_name: str):
             if method['name'].lower() == method_name.lower():
                 return method
     return None
+
+def get_fs_univariate_methods() -> List:
+    """
+    Get the list of univariate methods implemented in the library
+    :return: list
+    """
+    univariate_methods = FS_METHODS['univariate']
+    univariate_names = [method["name"] for method in univariate_methods["methods"]]
+    return univariate_names
+
+def is_valid_univariate_method(method_name: str) -> bool:
+    """
+    This method check if the given method name is a supported univariate method
+    :param method_name method name
+    :return: boolean
+    """
+    for method in FS_METHODS["univariate"]["methods"]:
+        if method["name"].lower() == method_name:
+            return True
+    return False
+
+

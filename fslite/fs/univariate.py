@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 
+from fslite.fs.constants import get_fs_univariate_methods, is_valid_univariate_method
 from fslite.fs.fdataframe import FSDataFrame
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
@@ -99,6 +100,9 @@ def univariate_filter(df: FSDataFrame,
 
     :return: Filtered DataFrame with selected features
     """
+
+    if not is_valid_univariate_method(univariate_method):
+        raise NotImplementedError("The provided method {} is not implented !! please select one from this list {}".format(univariate_method, get_fs_univariate_methods()))
 
     selected_features = []
 

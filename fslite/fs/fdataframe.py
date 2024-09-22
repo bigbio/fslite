@@ -221,7 +221,6 @@ class FSDataFrame:
     def to_pandas(self) -> DataFrame:
         """
         Return the DataFrame representation of the FSDataFrame.
-
         :return: Pandas DataFrame.
         """
 

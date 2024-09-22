@@ -16,7 +16,7 @@ def test_univariate_filter_corr():
     # create FSDataFrame instance
     fs_df = FSDataFrame(df=df,sample_col='Sample',label_col='label')
 
-    fsdf_filtered = univariate_filter(fs_df,univariate_method='u_corr', corr_threshold=0.3)
+    fsdf_filtered = univariate_filter(fs_df, univariate_method='u_corr', corr_threshold=0.3)
 
     assert fs_df.count_features() == 500
     assert fsdf_filtered.count_features() == 211
