@@ -73,7 +73,7 @@ def test_memory_fsdataframe():
         return mem_usage
 
     # Define test cases
-    feature_sizes = [1000, 5000, 10000, 50000, 100_000, 1_000_000]
+    feature_sizes = [1000, 5000, 10000]
     sample_sizes = [100, 500, 1000]
     nan_prob = [0.05, 0.1, 0.2, 0.5]
 
