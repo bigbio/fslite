@@ -108,3 +108,6 @@ def test_memory_fsdataframe():
 
     # Print results table
     print(results_df.to_string(index=False))
+
+    # Initialize FSDataFrame with DataFrame having sparse numerical features and insufficient memory for dense matrix
+
