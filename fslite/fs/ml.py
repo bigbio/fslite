@@ -4,7 +4,7 @@ A set of pre-defined ML algorithms wrapped with cross-validation approach
 for feature selection (e.g., rank by feature importance) and prediction.
 
 """
-from typing import Union, Optional, Dict, Any
+from typing import Union, Optional, Dict, Any, List
 
 from fslite.fs.constants import get_fs_ml_methods, is_valid_ml_method
 from fslite.fs.fdataframe import FSDataFrame
