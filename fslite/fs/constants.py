@@ -13,10 +13,7 @@ FS_METHODS = {
                        "treating each feature independently and assessing its contribution to the predictive "
                        "performance of the model.",
         "methods": [
-            {
-                "name": "anova",
-                "description": "Univariate ANOVA feature selection (f-classification)",
-            },
+            {"name": "anova","description": "Univariate ANOVA feature selection (f-classification)"},
             {"name": "u_corr", "description": "Univariate correlation"},
             {"name": "f_regression", "description": "Univariate f-regression"},
         ],
@@ -39,27 +36,14 @@ FS_METHODS = {
         "methods": [
             {"name": "rf_binary", "description": "Random Forest Binary Classifier"},
             {"name": "lsvc_binary", "description": "Linear SVC Binary Classifier"},
-            {
-                "name": "fm_binary",
-                "description": "Factorization Machine Binary Classifier",
-            },
-            {
-                "name": "rf_multilabel",
-                "description": "Random Forest Multi-label Classifier",
-            },
-            {
-                "name": "lg_multilabel",
-                "description": "Logistic Regression Multi-label Classifier",
-            },
+            {"name": "fm_binary", "description": "Factorization Machine Binary Classifier"},
+            {"name": "rf_multilabel", "description": "Random Forest Multi-label Classifier"},
+            {"name": "lg_multilabel","description": "Logistic Regression Multi-label Classifier"},
             {"name": "rf_regression", "description": "Random Forest Regression"},
-            {
-                "name": "fm_regression",
-                "description": "Factorization Machine Regression",
-            },
+            {"name": "fm_regression","description": "Factorization Machine Regression"},
         ],
     },
 }
-
 
 def get_fs_methods():
     """

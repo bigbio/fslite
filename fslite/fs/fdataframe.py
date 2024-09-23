@@ -61,6 +61,7 @@ class FSDataFrame:
         in the feature matrix exceeds this value, the matrix is stored in a sparse format unless memory allows.
         :param memory_threshold: Proportion of system memory available to use before deciding on sparse/dense.
         """
+        # TODO: We are loading full data into memory, look for other options. Maybe Dask?
         self.__df = df.copy()
 
         # Check for necessary columns
@@ -90,6 +91,7 @@ class FSDataFrame:
         self.__labels = df[label_col].tolist()
 
         # Encode labels
+        # TODO: Check if labels are categorical or continuous? For now, assume categorical
         label_encoder = LabelEncoder()
         self.__labels_matrix = label_encoder.fit_transform(df[label_col]).tolist()
         columns_to_drop.append(label_col)
