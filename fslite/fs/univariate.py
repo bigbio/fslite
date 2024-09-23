@@ -17,10 +17,6 @@ logger.setLevel(logging.INFO)
 class FSUnivariate(FSMethod):
     """
     A class for univariate feature selection methods.
-
-    Attributes:
-        fs_method (str): The univariate method to be used for feature selection.
-        kwargs (dict): Additional keyword arguments for the feature selection method.
     """
 
     valid_methods = get_fs_univariate_methods()
@@ -29,11 +25,9 @@ class FSUnivariate(FSMethod):
         """
         Initialize the univariate feature selection method with the specified parameters.
 
-        Parameters:
-            fs_method: The univariate method to be used for feature selection.
-            kwargs: Additional keyword arguments for the feature selection method.
+        :param fs_method: The univariate method to be used for feature selection.
+        :param kwargs: Additional keyword arguments for the feature selection method.
         """
-
         super().__init__(fs_method, **kwargs)
         self.validate_method(fs_method)
 
@@ -41,8 +35,7 @@ class FSUnivariate(FSMethod):
         """
         Validate the univariate method.
 
-        Parameters:
-            fs_method: The univariate method to be validated.
+        :param fs_method: The univariate method to be validated.
         """
 
         if not is_valid_univariate_method(fs_method):
@@ -55,11 +48,8 @@ class FSUnivariate(FSMethod):
         """
         Select features using the specified univariate method.
 
-        Parameters:
-            fsdf: The data frame on which feature selection is to be performed.
-
-        Returns:
-            The selected features.
+        :param fsdf: The data frame on which feature selection is to be performed.
+        :return fsdf: The data frame with selected features.
         """
 
         return self.univariate_filter(
@@ -80,7 +70,6 @@ class FSUnivariate(FSMethod):
 
         :param df: Input DataFrame
         :param univariate_method: Univariate selector method ('u_corr', 'anova', 'f_regression')
-
         :return: Filtered DataFrame with selected features
         """
 
