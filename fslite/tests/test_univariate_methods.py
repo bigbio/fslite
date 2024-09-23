@@ -1,8 +1,8 @@
 import pandas as pd
-from fslite.utils.datasets import get_tnbc_data_path
-from fslite.fs.fdataframe import FSDataFrame
 
+from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.univariate import FSUnivariate
+from fslite.utils.datasets import get_tnbc_data_path
 
 
 def test_univariate_filter_corr():

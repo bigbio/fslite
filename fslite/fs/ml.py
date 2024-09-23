@@ -5,10 +5,6 @@ for feature selection (e.g., rank by feature importance) and prediction.
 
 """
 
-import warnings
-from typing import List, Any, Dict, Optional, Union
-
-import pandas as pd
 from fslite.fs.constants import get_fs_ml_methods, is_valid_ml_method
 from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.methods import FSMethod, InvalidMethodError
@@ -241,8 +237,6 @@ class FSMLMethod(FSMethod):
 
     def __repr__(self):
         return self.__str__()
-
-
 
 
 #

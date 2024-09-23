@@ -101,6 +101,7 @@ def is_valid_univariate_method(method_name: str) -> bool:
             return True
     return False
 
+
 def is_valid_multivariate_method(method_name: str) -> bool:
     """
     This method check if the given method name is a supported multivariate method
@@ -111,6 +112,7 @@ def is_valid_multivariate_method(method_name: str) -> bool:
         if method["name"].lower() == method_name:
             return True
     return False
+
 
 def is_valid_ml_method(method_name: str) -> bool:
     """

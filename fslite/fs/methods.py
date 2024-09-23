@@ -1,9 +1,8 @@
 from abc import ABC, abstractmethod
-from typing import List, Type, Union, Optional, Dict, Any
+from typing import List
 
 from fslite.fs.constants import get_fs_method_details
 from fslite.fs.fdataframe import FSDataFrame
-
 
 
 class FSMethod(ABC):
@@ -59,6 +58,7 @@ class FSMethod(ABC):
         :param kwargs: The new parameters to be set.
         """
         self.kwargs.update(kwargs)
+
 
 # class FSPipeline:
 #     """

@@ -1,38 +1,16 @@
-# import logging
-# from typing import List
-#
-# import numpy as np
-# import pyspark
-# from pyspark.ml.feature import VarianceThresholdSelector
-# from pyspark.ml.stat import Correlation
-#
-# from fslite.fs.constants import (
-#     MULTIVARIATE_METHODS,
-#     MULTIVARIATE_CORRELATION,
-#     MULTIVARIATE_VARIANCE,
-# )
-#
-# from fslite.fs.core import FSDataFrame
-# from fslite.fs.utils import find_maximal_independent_set
-# from fslite.utils.generic import tag
-#
-# logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
-# logger = logging.getLogger("FSSPARK:MULTIVARIATE")
-# logger.setLevel(logging.INFO)
-#
 import logging
 from typing import List
 
 import numpy as np
 from scipy.stats import spearmanr
 
-from fslite.fs.constants import get_fs_multivariate_methods
+from fslite.fs.constants import get_fs_multivariate_methods, is_valid_multivariate_method
 from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.methods import FSMethod, InvalidMethodError
 from fslite.fs.utils import find_maximal_independent_set
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
-logger = logging.getLogger("FS:UNIVARIATE")
+logger = logging.getLogger("FS:MULTIVARIATE")
 logger.setLevel(logging.INFO)
 
 class FSMultivariate(FSMethod):
@@ -102,7 +80,8 @@ class FSMultivariate(FSMethod):
         if multivariate_method == "m_corr":
             selected_features = multivariate_correlation_selector(fsdf, **kwargs)
         elif multivariate_method == "variance":
-            selected_features = multivariate_variance_selector(fsdf, **kwargs)
+            # selected_features = multivariate_variance_selector(fsdf, **kwargs)
+            logging.info("Variance method not implemented yet.")
         else:
             raise ValueError(
                 f"Invalid multivariate method: {multivariate_method}. "

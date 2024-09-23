@@ -1,8 +1,9 @@
+import gc
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 from memory_profiler import memory_usage
-import gc
 
 from fslite.fs.fdataframe import FSDataFrame
 
