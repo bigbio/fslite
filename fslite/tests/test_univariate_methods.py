@@ -2,7 +2,7 @@ import pandas as pd
 from fslite.utils.datasets import get_tnbc_data_path
 from fslite.fs.fdataframe import FSDataFrame
 
-from fslite.fs.univariate import univariate_filter
+from fslite.fs.univariate import FSUnivariate
 
 
 def test_univariate_filter_corr():
@@ -17,9 +17,10 @@ def test_univariate_filter_corr():
     # create FSDataFrame instance
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
-    fsdf_filtered = univariate_filter(
-        fs_df, univariate_method="u_corr", corr_threshold=0.3
-    )
+    # create FSUnivariate instance
+    fs_univariate = FSUnivariate(fs_method="u_corr", corr_threshold=0.3)
+
+    fsdf_filtered = fs_univariate.select_features(fs_df)
 
     assert fs_df.count_features() == 500
     assert fsdf_filtered.count_features() == 211
