@@ -9,7 +9,6 @@ from fslite.fs.fdataframe import FSDataFrame
 
 
 def test_initializes_fsdataframe():
-
     # Create a sample DataFrame
     data = {
         "sample_id": [1, 2, 3],
@@ -29,7 +28,6 @@ def test_initializes_fsdataframe():
 
 
 def test_scaler_df():
-
     # Create a sample DataFrame
     data = {
         "sample_id": [1, 2, 3],
@@ -52,7 +50,7 @@ def test_scaler_df():
 
 def test_memory_fsdataframe():
     def create_test_data(
-        n_samples: int, n_features: int, zero_prob: float = 0.1, nan_prob: float = 0.05
+            n_samples: int, n_features: int, zero_prob: float = 0.1, nan_prob: float = 0.05
     ):
         """Create test data for FSDataFrame."""
         data = np.random.rand(n_samples, n_features)
@@ -101,7 +99,7 @@ def test_memory_fsdataframe():
             data = results_df[
                 (results_df["Features"] == feature_size)
                 & (results_df["NAN Prob"] == prob)
-            ]
+                ]
             plt.plot(
                 data["Samples"],
                 data["Memory (MB)"],

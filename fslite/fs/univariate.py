@@ -103,25 +103,6 @@ class FSUnivariate(FSMethod):
             return df.select_features_by_index(selected_features)
 
 
-def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
-    """
-    Compute the correlation coefficient between every column (features) in the input NumPy array and the label (class)
-    using a dictionary comprehension.
-
-    :param df: Input FSDataFrame
-    :return: Return dict {feature_index -> corr}
-    """
-
-    f_matrix = df.get_feature_matrix()  # get the feature matrix
-    labels = df.get_label_vector()  # get the label vector
-    features_index = range(f_matrix.shape[1])  # get the feature index
-
-    return {
-        f_index: abs(np.corrcoef(f_matrix[:, f_index], labels)[0, 1])
-        for f_index in features_index
-    }
-
-
 def univariate_correlation_selector(
     df: FSDataFrame, corr_threshold: float = 0.3
 ) -> List[int]:
@@ -134,7 +115,27 @@ def univariate_correlation_selector(
 
     :return: List of selected feature indices
     """
+
+    def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
+        """
+        Compute the correlation coefficient between every column (features) in the input NumPy array and the label (class)
+        using a dictionary comprehension.
+
+        :param df: Input FSDataFrame
+        :return: Return dict {feature_index -> corr}
+        """
+
+        f_matrix = df.get_feature_matrix()  # get the feature matrix
+        labels = df.get_label_vector()  # get the label vector
+        features_index = range(f_matrix.shape[1])  # get the feature index
+
+        return {
+            f_index: abs(np.corrcoef(f_matrix[:, f_index], labels)[0, 1])
+            for f_index in features_index
+        }
+
     correlations = compute_univariate_corr(df)
+
     selected_features = [
         feature_index
         for feature_index, corr in correlations.items()

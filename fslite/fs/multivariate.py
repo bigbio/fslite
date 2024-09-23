@@ -122,10 +122,10 @@ def multivariate_correlation_selector(
     :return: List of selected feature names.
     """
     # Retrieve the feature matrix
-    matrix = fsdf.get_matrix()
+    matrix = fsdf.get_feature_matrix()
 
     # Retrieve feature names
-    feature_names = fsdf.get_features_names()
+    feature_names = fsdf.get_label_col_name()
 
     # Compute correlation matrix
     if corr_method == "pearson":

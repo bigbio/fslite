@@ -1,5 +1,5 @@
 import logging
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Union
 
 import numpy
 import numpy as np
@@ -28,7 +28,7 @@ class FSDataFrame:
     feature names and samples labels.
 
     An object of FSDataFrame offers an interface to a DataFrame, a Pandas on  DataFrame
-    (e.g., suitable for visualization) or a  DataFrame with features as a Dense column vector (e.g. suitable for
+    (e.g., suitable for visualization) or a DataFrame with features as a Dense column vector (e.g. suitable for
     applying most algorithms from MLib API).
 
     It can also be split in training and testing dataset and filtered by removing selected features (by name or index).
@@ -142,7 +142,7 @@ class FSDataFrame:
 
         self.__is_scaled = (False, None)
 
-    def get_feature_matrix(self) -> numpy.array:
+    def get_feature_matrix(self) -> Union[np.ndarray, sparse.csr_matrix]:
         return self.__matrix
 
     def get_label_vector(self) -> numpy.array:
