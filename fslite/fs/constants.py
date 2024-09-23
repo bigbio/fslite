@@ -13,9 +13,11 @@ FS_METHODS = {
                        "treating each feature independently and assessing its contribution to the predictive "
                        "performance of the model.",
         "methods": [
-            {"name": "anova","description": "Univariate ANOVA feature selection (f-classification)"},
-            {"name": "u_corr", "description": "Univariate correlation"},
+            {"name": "anova", "description": "Univariate ANOVA feature selection (f-classification)"},
+            {"name": "u_corr", "description": "Univariate Pearson's correlation"},
             {"name": "f_regression", "description": "Univariate f-regression"},
+            {"name": "mutual_info_regression", "description": "Univariate mutual information regression"},
+            {"name": "mutual_info_classification", "description": "Univariate mutual information classification"},
         ],
     },
     "multivariate": {
