@@ -101,6 +101,28 @@ def is_valid_univariate_method(method_name: str) -> bool:
             return True
     return False
 
+def is_valid_multivariate_method(method_name: str) -> bool:
+    """
+    This method check if the given method name is a supported multivariate method
+    :param method_name method name
+    :return: boolean
+    """
+    for method in FS_METHODS["multivariate"]["methods"]:
+        if method["name"].lower() == method_name:
+            return True
+    return False
+
+def is_valid_ml_method(method_name: str) -> bool:
+    """
+    This method check if the given method name is a supported machine learning method
+    :param method_name method name
+    :return: boolean
+    """
+    for method in FS_METHODS["ml"]["methods"]:
+        if method["name"].lower() == method_name:
+            return True
+    return False
+
 
 def get_fs_method_by_class(fs_class: str) -> List:
     """

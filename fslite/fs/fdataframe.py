@@ -25,10 +25,10 @@ class FSDataFrame:
     FSDataFrame is a representation of a DataFrame with some functionalities to perform feature selection.
     An object from FSDataFrame is basically represented by a DataFrame with samples
     as rows and features as columns, with extra distributed indexed pandas series for
-    features names and samples labels.
+    feature names and samples labels.
 
     An object of FSDataFrame offers an interface to a DataFrame, a Pandas on  DataFrame
-    (e.g. suitable for visualization) or a  DataFrame with features as a Dense column vector (e.g. suitable for
+    (e.g., suitable for visualization) or a  DataFrame with features as a Dense column vector (e.g. suitable for
     applying most algorithms from MLib API).
 
     It can also be split in training and testing dataset and filtered by removing selected features (by name or index).

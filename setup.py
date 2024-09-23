@@ -23,7 +23,7 @@ setup(
         "scikit-learn",
         "scipy",
         "psutil",
-        "matplotlib"
+        "matplotlib",
     ],
     classifiers=[
         # Classifiers for your package

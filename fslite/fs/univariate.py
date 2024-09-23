@@ -7,10 +7,111 @@ from sklearn.feature_selection import SelectKBest, f_classif, f_regression
 
 from fslite.fs.constants import get_fs_univariate_methods, is_valid_univariate_method
 from fslite.fs.fdataframe import FSDataFrame
+from fslite.fs.methods import FSMethod, InvalidMethodError
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FS:UNIVARIATE")
 logger.setLevel(logging.INFO)
+
+
+class FSUnivariate(FSMethod):
+    """
+    A class for univariate feature selection methods.
+
+    Attributes:
+        fs_method (str): The univariate method to be used for feature selection.
+        kwargs (dict): Additional keyword arguments for the feature selection method.
+    """
+
+    valid_methods = get_fs_univariate_methods()
+
+    def __init__(self, fs_method: str, **kwargs):
+        """
+        Initialize the univariate feature selection method with the specified parameters.
+
+        Parameters:
+            fs_method: The univariate method to be used for feature selection.
+            kwargs: Additional keyword arguments for the feature selection method.
+        """
+
+        super().__init__(fs_method, **kwargs)
+        self.validate_method(fs_method)
+
+    def validate_method(self, fs_method: str):
+        """
+        Validate the univariate method.
+
+        Parameters:
+            fs_method: The univariate method to be validated.
+        """
+
+        if not is_valid_univariate_method(fs_method):
+            raise InvalidMethodError(
+                f"Invalid univariate method: {fs_method}. "
+                f"Accepted methods are {', '.join(self.valid_methods)}"
+            )
+
+    def select_features(self, fsdf) -> FSDataFrame:
+        """
+        Select features using the specified univariate method.
+
+        Parameters:
+            fsdf: The data frame on which feature selection is to be performed.
+
+        Returns:
+            The selected features.
+        """
+
+        return self.univariate_filter(
+            fsdf, univariate_method=self.fs_method, **self.kwargs
+        )
+
+    def __str__(self):
+        return f"FSUnivariate(method={self.fs_method}, kwargs={self.kwargs})"
+
+    def __repr__(self):
+        return self.__str__()
+
+    def univariate_filter(
+        self, df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
+    ) -> FSDataFrame:
+        """
+        Filter features after applying a univariate feature selector method.
+
+        :param df: Input DataFrame
+        :param univariate_method: Univariate selector method ('u_corr', 'anova', 'f_regression')
+
+        :return: Filtered DataFrame with selected features
+        """
+
+        if not is_valid_univariate_method(univariate_method):
+            raise NotImplementedError(
+                "The provided method {} is not implemented !! please select one from this list {}".format(
+                    univariate_method, get_fs_univariate_methods()
+                )
+            )
+
+        selected_features = []
+
+        if univariate_method == "anova":
+            # TODO: Implement ANOVA selector
+            # selected_features = univariate_selector(df, features, label, label_type='categorical', **kwargs)
+            pass
+        elif univariate_method == "f_regression":
+            # TODO: Implement F-regression selector
+            # selected_features = univariate_selector(df, features, label, label_type='continuous', **kwargs)
+            pass
+        elif univariate_method == "u_corr":
+            selected_features = univariate_correlation_selector(df, **kwargs)
+
+        logger.info(f"Applying univariate filter using method: {univariate_method}")
+
+        if len(selected_features) == 0:
+            logger.warning("No features selected. Returning original DataFrame.")
+            return df
+        else:
+            logger.info(f"Selected {len(selected_features)} features...")
+            return df.select_features_by_index(selected_features)
 
 
 def compute_univariate_corr(df: FSDataFrame) -> Dict[int, float]:
@@ -103,45 +204,3 @@ def univariate_selector(
 
     selected_features = [features[i] for i in selected_indices]
     return selected_features
-
-
-def univariate_filter(
-    df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
-) -> FSDataFrame:
-    """
-    Filter features after applying a univariate feature selector method.
-
-    :param df: Input DataFrame
-    :param univariate_method: Univariate selector method ('u_corr', 'anova', 'f_regression')
-
-    :return: Filtered DataFrame with selected features
-    """
-
-    if not is_valid_univariate_method(univariate_method):
-        raise NotImplementedError(
-            "The provided method {} is not implemented !! please select one from this list {}".format(
-                univariate_method, get_fs_univariate_methods()
-            )
-        )
-
-    selected_features = []
-
-    if univariate_method == "anova":
-        # TODO: Implement ANOVA selector
-        # selected_features = univariate_selector(df, features, label, label_type='categorical', **kwargs)
-        pass
-    elif univariate_method == "f_regression":
-        # TODO: Implement F-regression selector
-        # selected_features = univariate_selector(df, features, label, label_type='continuous', **kwargs)
-        pass
-    elif univariate_method == "u_corr":
-        selected_features = univariate_correlation_selector(df, **kwargs)
-
-    logger.info(f"Applying univariate filter using method: {univariate_method}")
-
-    if len(selected_features) == 0:
-        logger.warning("No features selected. Returning original DataFrame.")
-        return df
-    else:
-        logger.info(f"Selected {len(selected_features)} features...")
-        return df.select_features_by_index(selected_features)
