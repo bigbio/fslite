@@ -4,6 +4,7 @@ A set of pre-defined ML algorithms wrapped with cross-validation approach
 for feature selection (e.g., rank by feature importance) and prediction.
 
 """
+
 from typing import Union, Optional, Dict, Any, List
 
 from fslite.fs.constants import get_fs_ml_methods, is_valid_ml_method
@@ -247,6 +248,7 @@ class FSMLMethod(FSMethod):
     def __repr__(self):
         return self.__str__()
 
+
 class MLCVModel:
     """
     A factory class for creating various machine learning models with scikit-learn.
@@ -264,7 +266,7 @@ class MLCVModel:
             RandomForestRegressor,
             LinearSVC,
             LogisticRegression,
-            SVC
+            SVC,
         ],
         scoring: str,
         estimator_params: Optional[Dict[str, Any]] = None,
@@ -291,7 +293,7 @@ class MLCVModel:
                 estimator=self.estimator,
                 param_grid=self.grid_params,
                 scoring=self.scoring,
-                cv=self.cv
+                cv=self.cv,
             )
 
     def fit(self, fsdf: FSDataFrame) -> "MLCVModel":
@@ -319,15 +321,18 @@ class MLCVModel:
         """
         Get feature importance scores from the best model.
         """
-        if not isinstance(self._best_model, (RandomForestClassifier, RandomForestRegressor)):
-            raise ValueError("Feature importance is only available for tree-based models.")
+        if not isinstance(
+            self._best_model, (RandomForestClassifier, RandomForestRegressor)
+        ):
+            raise ValueError(
+                "Feature importance is only available for tree-based models."
+            )
 
         features = self._fsdf.get_feature_names()
         importances = self._best_model.feature_importances_
-        df = pd.DataFrame({
-            'feature': features,
-            'importance': importances
-        }).sort_values(by='importance', ascending=False)
+        df = pd.DataFrame({"feature": features, "importance": importances}).sort_values(
+            by="importance", ascending=False
+        )
 
         return df
 
@@ -338,11 +343,11 @@ class MLCVModel:
         X_train, y_train = self._fsdf.get_features_and_labels()
         y_pred = self._best_model.predict(X_train)
 
-        if self.scoring == 'accuracy':
+        if self.scoring == "accuracy":
             return accuracy_score(y_train, y_pred)
-        elif self.scoring == 'f1':
+        elif self.scoring == "f1":
             return f1_score(y_train, y_pred)
-        elif self.scoring == 'roc_auc':
+        elif self.scoring == "roc_auc":
             return roc_auc_score(y_train, y_pred)
         else:
             raise ValueError("Unsupported scoring method.")
@@ -354,11 +359,11 @@ class MLCVModel:
         X_test, y_test = test_data.get_features_and_labels()
         y_pred = self._best_model.predict(X_test)
 
-        if self.scoring == 'accuracy':
+        if self.scoring == "accuracy":
             return accuracy_score(y_test, y_pred)
-        elif self.scoring == 'f1':
+        elif self.scoring == "f1":
             return f1_score(y_test, y_pred)
-        elif self.scoring == 'roc_auc':
+        elif self.scoring == "roc_auc":
             return roc_auc_score(y_test, y_pred)
         else:
             raise ValueError("Unsupported scoring method.")
@@ -368,8 +373,8 @@ class MLCVModel:
         model_type: str,
         estimator_params: Dict[str, Any] = None,
         grid_params: Dict[str, List[Any]] = None,
-        scoring: str = 'accuracy',
-        cv: int = 5
+        scoring: str = "accuracy",
+        cv: int = 5,
     ) -> "MLCVModel":
         """
         Create an ML model based on the model type.

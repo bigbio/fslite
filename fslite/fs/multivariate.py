@@ -4,7 +4,10 @@ from typing import List
 import numpy as np
 from scipy.stats import spearmanr
 
-from fslite.fs.constants import get_fs_multivariate_methods, is_valid_multivariate_method
+from fslite.fs.constants import (
+    get_fs_multivariate_methods,
+    is_valid_multivariate_method,
+)
 from fslite.fs.fdataframe import FSDataFrame
 from fslite.fs.methods import FSMethod, InvalidMethodError
 from fslite.fs.utils import find_maximal_independent_set
@@ -12,6 +15,7 @@ from fslite.fs.utils import find_maximal_independent_set
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FS:MULTIVARIATE")
 logger.setLevel(logging.INFO)
+
 
 class FSMultivariate(FSMethod):
     """
@@ -56,6 +60,7 @@ class FSMultivariate(FSMethod):
                 f"Invalid multivariate method: "
                 f"{multivariate_method}. Accepted methods are {', '.join(self.valid_methods)}"
             )
+
     def select_features(self, fsdf: FSDataFrame):
         """
         Select features using the specified multivariate method.
@@ -100,10 +105,10 @@ class FSMultivariate(FSMethod):
 
 
 def multivariate_correlation_selector(
-        fsdf: FSDataFrame,
-        strict: bool = True,
-        corr_threshold: float = 0.75,
-        corr_method: str = "pearson",
+    fsdf: FSDataFrame,
+    strict: bool = True,
+    corr_threshold: float = 0.75,
+    corr_method: str = "pearson",
 ) -> List[str]:
     """
     Compute the correlation matrix among input features and select those below a specified threshold.
@@ -128,7 +133,9 @@ def multivariate_correlation_selector(
     elif corr_method == "spearman":
         corr_matrix, _ = spearmanr(matrix)
     else:
-        raise ValueError(f"Unsupported correlation method '{corr_method}'. Use 'pearson' or 'spearman'.")
+        raise ValueError(
+            f"Unsupported correlation method '{corr_method}'. Use 'pearson' or 'spearman'."
+        )
 
     # Get absolute values of correlations to check magnitude
     corr_matrix = np.abs(corr_matrix)

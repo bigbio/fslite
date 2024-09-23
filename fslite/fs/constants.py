@@ -7,6 +7,11 @@ from typing import Dict, List, Union
 FS_METHODS = {
     "univariate": {
         "title": "Univariate Feature Selection",
+        "description": "Univariate feature selection refers to the process of selecting the most relevant features for "
+                       "a machine learning model by evaluating each feature individually with respect to the target "
+                       "variable using univariate statistical tests. It simplifies the feature selection process by "
+                       "treating each feature independently and assessing its contribution to the predictive "
+                       "performance of the model.",
         "methods": [
             {
                 "name": "anova",
@@ -18,6 +23,11 @@ FS_METHODS = {
     },
     "multivariate": {
         "title": "Multivariate Feature Selection",
+        "description": "Multivariate feature selection is a method of selecting features by evaluating them in "
+                       "combination rather than individually. Unlike univariate feature selection, which treats each "
+                       "feature separately, multivariate feature selection considers the relationships and interactions "
+                       "between multiple features and the target variable. This method aims to identify a subset of "
+                       "features that work well together to improve the performance of a machine learning model.",
         "methods": [
             {"name": "m_corr", "description": "Multivariate Correlation"},
             {"name": "variance", "description": "Multivariate Variance"},
@@ -25,6 +35,7 @@ FS_METHODS = {
     },
     "ml": {
         "title": "Machine Learning Wrapper",
+        "description": "Machine learning wrapper methods are feature selection techniques that use a machine learning ",
         "methods": [
             {"name": "rf_binary", "description": "Random Forest Binary Classifier"},
             {"name": "lsvc_binary", "description": "Linear SVC Binary Classifier"},
