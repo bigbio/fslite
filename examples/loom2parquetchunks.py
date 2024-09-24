@@ -7,7 +7,7 @@ import pandas as pd
 import loompy
 
 # define the path to the loom file
-loom_file = "/path/to/loom/GSE156793_S3_gene_count.loom"
+loom_file = "GSE156793_S3_gene_count.loom"
 
 # connect to the loom file
 ds = loompy.connect(loom_file)
@@ -31,7 +31,7 @@ cell_cluster = ds.ca["Main_cluster_name"]
 assay = ds.ca["Assay"]
 development_day = ds.ca["Development_day"]
 
-# make a dataframe with the sample metadata
+# make a dataframe with the sample metadata, define the columns types
 sample_df = pd.DataFrame({"sample_id": sample_id,
                           "cell_cluster": cell_cluster,
                           "assay": assay,
@@ -57,7 +57,7 @@ sample_df.head()
 # Save the sample metadata to parquet
 (sample_df
  .reset_index()
- .to_parquet("sample_metadata.parquet.gz",
+ .to_parquet("sample_metadata.parquet",
              index=False,
              engine="auto",
              compression="gzip")
@@ -67,6 +67,8 @@ sample_df.head()
 # transpose dataset and convert to parquet.
 # process the data per chunks.
 chunk_size = 2000
+number_chunks = 1000 # Number of chunks to process, if None, all chunks are processed
+count = 0
 for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
     # retrieve the chunk
     matrix_chunk = view[:, :]
@@ -99,9 +101,14 @@ for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
     df_chunk = df_chunk.rename(columns={"index": "sample_id"})
 
     # save the chunk to parquet
-    df_chunk.to_parquet(f"gene_count_chunk_{ix}.parquet.gz",
+    df_chunk.to_parquet(f"gene_count_chunk_{ix}.parquet",
                         index=False,
-                        engine="fastparquet",
+                        engine="pyarrow",
                         compression="gzip")
 
     print(f"Chunk {ix} saved")
+    count = count + 1
+
+    # break the loop if the number of chunks is reached
+    if number_chunks is not None and count >= number_chunks:
+        break
