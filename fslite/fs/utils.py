@@ -2,7 +2,9 @@ import logging
 from typing import Dict, Tuple, Set
 
 import networkx as nx
+import numpy as np
 from networkx.algorithms.mis import maximal_independent_set
+from scipy.stats import rankdata
 from sklearn.impute import SimpleImputer
 
 from fslite.fs.fdataframe import FSDataFrame
@@ -40,7 +42,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
 
 
 def remove_features_by_missingness_rate(
-    fsdf: FSDataFrame, threshold: float = 0.15
+        fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
@@ -118,3 +120,19 @@ def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[in
         return set(max_ind_set)
     else:
         return set([int(i) for i in graph.nodes if i not in max_ind_set])
+
+
+# define a function to convert a numerical vector to percentile ranks
+
+def percentile_rank(vector: np.array) -> np.array:
+    """
+    Convert a numerical vector to percentile ranks.
+
+    :param vector: Numerical vector.
+    :return: Vector of percentile ranks.
+    """
+    # Rank the data and then normalize by the size of the vector to get percentiles
+    ranks = rankdata(vector, method='average')
+    percentile_ranks = ranks / len(vector)
+
+    return percentile_ranks
