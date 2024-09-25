@@ -109,7 +109,7 @@ class FSDataFrame:
 
         # Check sparsity
         num_elements = numerical_df.size
-        num_zeros = (numerical_df == 0).sum().sum()
+        num_zeros = np.count_nonzero(numerical_df == 0)
         sparsity = num_zeros / num_elements
 
         dense_matrix_size = numerical_df.memory_usage(deep=True).sum()  # In bytes
