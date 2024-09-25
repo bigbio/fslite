@@ -36,10 +36,11 @@ def generate_large_test_dataset():
             chunk_labels = labels[chunk_start:chunk_end]
 
             # Generate chunk of features
-            # Generate chunk of features
-            chunk_features = (
-                (f"feature{i}", np.random.rand(chunk_end - chunk_start))
+            rng = np.random.default_rng()
+            chunk_features = {
+                f"feature{i}": rng.random(chunk_end - chunk_start)
                 for i in range(1, n_features + 1)
+            }
             )
 
             # Create DataFrame chunk
