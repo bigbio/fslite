@@ -184,10 +184,10 @@ class FSMethod(ABC):
 #         return self.__str__()
 
 
-class InvalidMethodError(Exception):
+class InvalidMethodError(ValueError):
     """
     Error raised when an invalid feature selection method is used.
     """
 
     def __init__(self, message):
-        super().__init__(message)
+        super().__init__(f"Invalid feature selection method: {message}")
