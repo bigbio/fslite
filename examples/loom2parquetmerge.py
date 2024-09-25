@@ -28,7 +28,7 @@ def concatenate_parquet_files_incremental(files_paths, output_path, batch_size=1
     :param batch_size: Number of rows to read from each file at a time.
     """
     writer = None
-with pq.ParquetWriter(output_path, schema=None, compression='gzip') as writer:
+
     for file_path in files_paths:
         print(f"Processing file: {file_path}")
         parquet_file = pq.ParquetFile(file_path)
@@ -38,10 +38,16 @@ with pq.ParquetWriter(output_path, schema=None, compression='gzip') as writer:
             # Convert the batch to a PyArrow Table
             table = pa.Table.from_batches([batch])
 
+            # If the writer is not initialized, create a new Parquet writer
+            if writer is None:
+                writer = pq.ParquetWriter(output_path, table.schema, compression='gzip')
+
             # Write the batch to the output Parquet file
             writer.write_table(table)
 
-print(f"Concatenated parquet file written to {output_path}")
+    # Close the writer after all batches are written
+    if writer is not None:
+        writer.close()
         print(f"Concatenated parquet file written to {output_path}")
 
 
