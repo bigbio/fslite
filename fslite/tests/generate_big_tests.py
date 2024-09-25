@@ -6,7 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 
-def test_generate_big_dataset():
+def generate_large_test_dataset():
     # Parameters for the dataset
     n_samples = 1200
     n_features = 10_000
