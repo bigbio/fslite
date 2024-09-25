@@ -140,7 +140,7 @@ class FSMLMethod(FSMethod):
         """
 
         if fsdf is None or fsdf.count_features() == 0 or fsdf.count_instances() == 0:
-            raise ValueError(
+            raise InvalidDataError(
                 "The data frame is empty or does not contain any features."
             )
 
