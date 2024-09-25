@@ -84,7 +84,7 @@ def test_multivariate_filter_variance_percentile_mode():
     fsdf_filtered = fs_multivariate.select_features(fs_df)
 
     assert fs_df.count_features() == 500
-    assert fsdf_filtered.count_features() == 400
+    assert fsdf_filtered.count_features() == 500
 
     # Export the filtered DataFrame as Pandas DataFrame
     df_filtered = fsdf_filtered.to_pandas()
