@@ -66,8 +66,8 @@ sample_df.head()
 
 # transpose dataset and convert to parquet.
 # process the data per chunks.
-chunk_size = 2000
-number_chunks = 1000 # Number of chunks to process, if None, all chunks are processed
+chunk_size = 50000
+number_chunks = 50 # Number of chunks to process, if None, all chunks are processed
 count = 0
 for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
     # retrieve the chunk
