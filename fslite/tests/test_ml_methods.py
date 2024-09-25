@@ -110,7 +110,7 @@
 #         # get the accuracy on testing
 #         testing_acc = ml_method.get_eval_metric_on_testing(testing_data)
 #         print(f"Accuracy on test data: {testing_acc}")
-#         assert testing_acc > 0.7
+assert 0.65 < testing_acc < 0.95, f"Testing accuracy {testing_acc} is out of expected range"
 #
 #     def test_multilabel_lr_model(self):
 #         fsdf = self.import_FSDataFrame()
