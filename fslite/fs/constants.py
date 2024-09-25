@@ -8,25 +8,34 @@ FS_METHODS = {
     "univariate": {
         "title": "Univariate Feature Selection",
         "description": "Univariate feature selection refers to the process of selecting the most relevant features for "
-                       "a machine learning model by evaluating each feature individually with respect to the target "
-                       "variable using univariate statistical tests. It simplifies the feature selection process by "
-                       "treating each feature independently and assessing its contribution to the predictive "
-                       "performance of the model.",
+        "a machine learning model by evaluating each feature individually with respect to the target "
+        "variable using univariate statistical tests. It simplifies the feature selection process by "
+        "treating each feature independently and assessing its contribution to the predictive "
+        "performance of the model.",
         "methods": [
-            {"name": "anova", "description": "Univariate ANOVA feature selection (f-classification)"},
+            {
+                "name": "anova",
+                "description": "Univariate ANOVA feature selection (f-classification)",
+            },
             {"name": "u_corr", "description": "Univariate Pearson's correlation"},
             {"name": "f_regression", "description": "Univariate f-regression"},
-            {"name": "mutual_info_regression", "description": "Univariate mutual information regression"},
-            {"name": "mutual_info_classification", "description": "Univariate mutual information classification"},
+            {
+                "name": "mutual_info_regression",
+                "description": "Univariate mutual information regression",
+            },
+            {
+                "name": "mutual_info_classification",
+                "description": "Univariate mutual information classification",
+            },
         ],
     },
     "multivariate": {
         "title": "Multivariate Feature Selection",
         "description": "Multivariate feature selection is a method of selecting features by evaluating them in "
-                       "combination rather than individually. Unlike univariate feature selection, which treats each "
-                       "feature separately, multivariate feature selection considers the relationships and interactions "
-                       "between multiple features and the target variable. This method aims to identify a subset of "
-                       "features that work well together to improve the performance of a machine learning model.",
+        "combination rather than individually. Unlike univariate feature selection, which treats each "
+        "feature separately, multivariate feature selection considers the relationships and interactions "
+        "between multiple features and the target variable. This method aims to identify a subset of "
+        "features that work well together to improve the performance of a machine learning model.",
         "methods": [
             {"name": "m_corr", "description": "Multivariate Correlation"},
             {"name": "variance", "description": "Multivariate Variance"},
@@ -38,14 +47,27 @@ FS_METHODS = {
         "methods": [
             {"name": "rf_binary", "description": "Random Forest Binary Classifier"},
             {"name": "lsvc_binary", "description": "Linear SVC Binary Classifier"},
-            {"name": "fm_binary", "description": "Factorization Machine Binary Classifier"},
-            {"name": "rf_multilabel", "description": "Random Forest Multi-label Classifier"},
-            {"name": "lg_multilabel","description": "Logistic Regression Multi-label Classifier"},
+            {
+                "name": "fm_binary",
+                "description": "Factorization Machine Binary Classifier",
+            },
+            {
+                "name": "rf_multilabel",
+                "description": "Random Forest Multi-label Classifier",
+            },
+            {
+                "name": "lg_multilabel",
+                "description": "Logistic Regression Multi-label Classifier",
+            },
             {"name": "rf_regression", "description": "Random Forest Regression"},
-            {"name": "fm_regression","description": "Factorization Machine Regression"},
+            {
+                "name": "fm_regression",
+                "description": "Factorization Machine Regression",
+            },
         ],
     },
 }
+
 
 def get_fs_methods():
     """

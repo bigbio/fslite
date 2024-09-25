@@ -2,11 +2,13 @@ import logging
 from typing import Dict, List
 
 import numpy as np
-from sklearn.feature_selection import (GenericUnivariateSelect,
-                                       f_classif,
-                                       f_regression,
-                                       mutual_info_classif,
-                                       mutual_info_regression)
+from sklearn.feature_selection import (
+    GenericUnivariateSelect,
+    f_classif,
+    f_regression,
+    mutual_info_classif,
+    mutual_info_regression,
+)
 
 from fslite.fs.constants import get_fs_univariate_methods, is_valid_univariate_method
 from fslite.fs.fdataframe import FSDataFrame
@@ -66,11 +68,11 @@ class FSUnivariate(FSMethod):
         return self.__str__()
 
     def univariate_feature_selector(
-            self,
-            df: FSDataFrame,
-            score_func: str = "f_classif",
-            selection_mode: str = "percentile",
-            selection_threshold: float = 0.8
+        self,
+        df: FSDataFrame,
+        score_func: str = "f_classif",
+        selection_mode: str = "percentile",
+        selection_threshold: float = 0.8,
     ) -> List[int]:
         """
         Wrapper for scikit-learn's `GenericUnivariateSelect` feature selector, supporting multiple scoring functions.
@@ -95,7 +97,9 @@ class FSUnivariate(FSMethod):
         }
 
         if score_func not in score_func_mapping:
-            raise ValueError(f"Invalid score_func '{score_func}'. Valid options are: {list(score_func_mapping.keys())}")
+            raise ValueError(
+                f"Invalid score_func '{score_func}'. Valid options are: {list(score_func_mapping.keys())}"
+            )
 
         # Extract the score function
         selected_score_func = score_func_mapping[score_func]
@@ -105,9 +109,11 @@ class FSUnivariate(FSMethod):
         y = df.get_label_vector()
 
         # Configure the selector using the provided score function and selection mode/threshold
-        selector = GenericUnivariateSelect(score_func=selected_score_func,
-                                           mode=selection_mode,
-                                           param=selection_threshold)
+        selector = GenericUnivariateSelect(
+            score_func=selected_score_func,
+            mode=selection_mode,
+            param=selection_threshold,
+        )
 
         # Fit the selector and get only the selected feature indices (not the transformed matrix)
         _ = selector.fit_transform(f_matrix, y)
@@ -116,7 +122,7 @@ class FSUnivariate(FSMethod):
         return list(selected_features)
 
     def univariate_filter(
-            self, df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
+        self, df: FSDataFrame, univariate_method: str = "u_corr", **kwargs
     ) -> FSDataFrame:
         """
         Filter features after applying a univariate feature selector method.
@@ -137,21 +143,29 @@ class FSUnivariate(FSMethod):
         selected_features = []
 
         if univariate_method == "anova":
-            selected_features = self.univariate_feature_selector(df, score_func="f_classif", **kwargs)
+            selected_features = self.univariate_feature_selector(
+                df, score_func="f_classif", **kwargs
+            )
         elif univariate_method == "f_regression":
-            selected_features = self.univariate_feature_selector(df, score_func="f_regression", **kwargs)
+            selected_features = self.univariate_feature_selector(
+                df, score_func="f_regression", **kwargs
+            )
         elif univariate_method == "u_corr":
             selected_features = univariate_correlation_selector(df, **kwargs)
         elif univariate_method == "mutual_info_classification":
-            selected_features = self.univariate_feature_selector(df, score_func="mutual_info_classif", **kwargs)
+            selected_features = self.univariate_feature_selector(
+                df, score_func="mutual_info_classif", **kwargs
+            )
         elif univariate_method == "mutual_info_regression":
-            selected_features = self.univariate_feature_selector(df, score_func="mutual_info_regression", **kwargs)
+            selected_features = self.univariate_feature_selector(
+                df, score_func="mutual_info_regression", **kwargs
+            )
 
         logger.info(
-                    f"Applying univariate filter using method: {univariate_method} \n"
-                    f" with selection mode: {kwargs.get('selection_mode')} \n"
-                    f" and selection threshold: {kwargs.get('selection_threshold')}"
-                    )
+            f"Applying univariate filter using method: {univariate_method} \n"
+            f" with selection mode: {kwargs.get('selection_mode')} \n"
+            f" and selection threshold: {kwargs.get('selection_threshold')}"
+        )
 
         if len(selected_features) == 0:
             logger.warning("No features selected. Returning original DataFrame.")
@@ -162,8 +176,7 @@ class FSUnivariate(FSMethod):
 
 
 def univariate_correlation_selector(
-    df: FSDataFrame,
-    selection_threshold: float = 0.3
+    df: FSDataFrame, selection_threshold: float = 0.3
 ) -> List[int]:
     """
     TODO: Replace this implementation with sci-learn's GenericUnivariateSelect with score_func='f_regression'
@@ -202,4 +215,3 @@ def univariate_correlation_selector(
         if corr <= selection_threshold
     ]
     return selected_features
-

@@ -70,11 +70,9 @@ class FSMultivariate(FSMethod):
             fsdf, multivariate_method=self.fs_method, **self.kwargs
         )
 
-    def multivariate_filter(self,
-                            fsdf: FSDataFrame,
-                            multivariate_method: str = "m_corr",
-                            **kwargs
-                            ) -> FSDataFrame:
+    def multivariate_filter(
+        self, fsdf: FSDataFrame, multivariate_method: str = "m_corr", **kwargs
+    ) -> FSDataFrame:
         """
          Filter features after applying a multivariate feature selector method.
 
@@ -107,10 +105,10 @@ class FSMultivariate(FSMethod):
 
 
 def multivariate_correlation_selector(
-        fsdf: FSDataFrame,
-        selection_mode: str = 'strict',
-        selection_threshold: float = 0.75,
-        corr_method: str = "pearson",
+    fsdf: FSDataFrame,
+    selection_mode: str = "strict",
+    selection_threshold: float = 0.75,
+    corr_method: str = "pearson",
 ) -> List[int]:
     """
     Compute the correlation matrix among input features and select those below a specified threshold.
@@ -173,9 +171,9 @@ def multivariate_correlation_selector(
     return selected_features
 
 
-def multivariate_variance_selector(fsdf: FSDataFrame,
-                                   selection_mode: str = "k_best",
-                                   selection_threshold: float = 0.0) -> List[int]:
+def multivariate_variance_selector(
+    fsdf: FSDataFrame, selection_mode: str = "k_best", selection_threshold: float = 0.0
+) -> List[int]:
     """
     Filter features based on variance threshold.
 
@@ -189,7 +187,7 @@ def multivariate_variance_selector(fsdf: FSDataFrame,
 
     :return: List of selected feature indices
     """
-    
+
     # Retrieve the feature matrix
     f_matrix = fsdf.get_feature_matrix()
 
@@ -212,8 +210,10 @@ def multivariate_variance_selector(fsdf: FSDataFrame,
         raise ValueError(
             f"Unsupported selection mode '{selection_mode}'. Use 'percentile' or 'k_best'."
         )
-    
-    logger.info(f"Feature selection mode: {selection_mode}. \n"
-                f"Number of features selected: {len(selected_features)}")
+
+    logger.info(
+        f"Feature selection mode: {selection_mode}. \n"
+        f"Number of features selected: {len(selected_features)}"
+    )
 
     return list(selected_features)

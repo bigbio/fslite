@@ -9,7 +9,7 @@ from typing import Union, Optional, Dict, Any, List
 
 from fslite.fs.constants import get_fs_ml_methods, is_valid_ml_method
 from fslite.fs.fdataframe import FSDataFrame
-from fslite.fs.methods import FSMethod, InvalidMethodError
+from fslite.fs.methods import FSMethod, InvalidMethodError, InvalidDataError
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.svm import SVC, LinearSVC
 from sklearn.linear_model import LogisticRegression

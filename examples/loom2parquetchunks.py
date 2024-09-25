@@ -32,10 +32,14 @@ assay = ds.ca["Assay"]
 development_day = ds.ca["Development_day"]
 
 # make a dataframe with the sample metadata, define the columns types
-sample_df = pd.DataFrame({"sample_id": sample_id,
-                          "cell_cluster": cell_cluster,
-                          "assay": assay,
-                          "development_day": development_day})
+sample_df = pd.DataFrame(
+    {
+        "sample_id": sample_id,
+        "cell_cluster": cell_cluster,
+        "assay": assay,
+        "development_day": development_day,
+    }
+)
 
 # print the first 5 rows
 sample_df.head()
@@ -55,21 +59,19 @@ sample_df = sample_df.set_index("sample_id")
 sample_df.head()
 
 # Save the sample metadata to parquet
-(sample_df
- .reset_index()
- .to_parquet("sample_metadata.parquet",
-             index=False,
-             engine="auto",
-             compression="gzip")
- )
+(
+    sample_df.reset_index().to_parquet(
+        "sample_metadata.parquet", index=False, engine="auto", compression="gzip"
+    )
+)
 
 
 # transpose dataset and convert to parquet.
 # process the data per chunks.
 chunk_size = 50000
-number_chunks = 50 # Number of chunks to process, if None, all chunks are processed
+number_chunks = 50  # Number of chunks to process, if None, all chunks are processed
 count = 0
-for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
+for ix, selection, view in ds.scan(axis=1, batch_size=chunk_size):
     # retrieve the chunk
     matrix_chunk = view[:, :]
 
@@ -77,13 +79,13 @@ for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
     matrix_chunk_t = matrix_chunk.T
 
     # convert to pandas dataframe
-    df_chunk = pd.DataFrame(matrix_chunk_t,
-                            index=sample_id[selection.tolist()],
-                            columns=gene_ids)
+    df_chunk = pd.DataFrame(
+        matrix_chunk_t, index=sample_id[selection.tolist()], columns=gene_ids
+    )
 
     # merge chunk with sample metadata
     df_chunk = pd.merge(
-        left=sample_df[['cell_cluster_id', 'development_day', 'assay_id']],
+        left=sample_df[["cell_cluster_id", "development_day", "assay_id"]],
         right=df_chunk,
         how="inner",
         left_index=True,
@@ -91,7 +93,7 @@ for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
         sort=False,
         copy=True,
         indicator=False,
-        validate="one_to_one"
+        validate="one_to_one",
     )
 
     # reset the index
@@ -101,10 +103,12 @@ for (ix, selection, view) in ds.scan(axis=1, batch_size=chunk_size):
     df_chunk = df_chunk.rename(columns={"index": "sample_id"})
 
     # save the chunk to parquet
-    df_chunk.to_parquet(f"gene_count_chunk_{ix}.parquet",
-                        index=False,
-                        engine="pyarrow",
-                        compression="gzip")
+    df_chunk.to_parquet(
+        f"gene_count_chunk_{ix}.parquet",
+        index=False,
+        engine="pyarrow",
+        compression="gzip",
+    )
 
     print(f"Chunk {ix} saved")
     count = count + 1

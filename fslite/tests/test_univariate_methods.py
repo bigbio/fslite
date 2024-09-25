@@ -18,8 +18,7 @@ def test_univariate_filter_corr():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSUnivariate instance
-    fs_univariate = FSUnivariate(fs_method="u_corr",
-                                 selection_threshold=0.3)
+    fs_univariate = FSUnivariate(fs_method="u_corr", selection_threshold=0.3)
 
     fsdf_filtered = fs_univariate.select_features(fs_df)
 
@@ -45,9 +44,9 @@ def test_univariate_filter_anova():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSUnivariate instance
-    fs_univariate = FSUnivariate(fs_method="anova",
-                                 selection_mode="percentile",
-                                 selection_threshold=0.8)
+    fs_univariate = FSUnivariate(
+        fs_method="anova", selection_mode="percentile", selection_threshold=0.8
+    )
 
     fsdf_filtered = fs_univariate.select_features(fs_df)
 
@@ -73,9 +72,11 @@ def test_univariate_filter_mutual_info_classification():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSUnivariate instance
-    fs_univariate = FSUnivariate(fs_method="mutual_info_classification",
-                                 selection_mode="k_best",
-                                 selection_threshold=30)
+    fs_univariate = FSUnivariate(
+        fs_method="mutual_info_classification",
+        selection_mode="k_best",
+        selection_threshold=30,
+    )
 
     fsdf_filtered = fs_univariate.select_features(fs_df)
 
@@ -101,9 +102,11 @@ def test_univariate_filter_mutual_info_regression():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSUnivariate instance
-    fs_univariate = FSUnivariate(fs_method="mutual_info_regression",
-                                 selection_mode="percentile",
-                                 selection_threshold=0.8)
+    fs_univariate = FSUnivariate(
+        fs_method="mutual_info_regression",
+        selection_mode="percentile",
+        selection_threshold=0.8,
+    )
 
     fsdf_filtered = fs_univariate.select_features(fs_df)
 
@@ -129,9 +132,9 @@ def test_univariate_filter_f_regression():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSUnivariate instance
-    fs_univariate = FSUnivariate(fs_method="f_regression",
-                                 selection_mode="percentile",
-                                 selection_threshold=0.8)
+    fs_univariate = FSUnivariate(
+        fs_method="f_regression", selection_mode="percentile", selection_threshold=0.8
+    )
 
     fsdf_filtered = fs_univariate.select_features(fs_df)
 

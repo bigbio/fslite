@@ -19,9 +19,9 @@ def test_multivariate_filter_corr_strict_mode():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSMultivariate instance
-    fs_multivariate = FSMultivariate(fs_method="m_corr",
-                                     selection_mode="strict",
-                                     selection_threshold=0.75)
+    fs_multivariate = FSMultivariate(
+        fs_method="m_corr", selection_mode="strict", selection_threshold=0.75
+    )
 
     fsdf_filtered = fs_multivariate.select_features(fs_df)
 
@@ -47,9 +47,9 @@ def test_multivariate_filter_corr_approximate_mode():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSMultivariate instance
-    fs_multivariate = FSMultivariate(fs_method="m_corr",
-                                     selection_mode="approximate",
-                                     selection_threshold=0.75)
+    fs_multivariate = FSMultivariate(
+        fs_method="m_corr", selection_mode="approximate", selection_threshold=0.75
+    )
 
     fsdf_filtered = fs_multivariate.select_features(fs_df)
 
@@ -77,9 +77,9 @@ def test_multivariate_filter_variance_percentile_mode():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSMultivariate instance
-    fs_multivariate = FSMultivariate(fs_method="variance",
-                                     selection_mode="percentile",
-                                     selection_threshold=0.2)
+    fs_multivariate = FSMultivariate(
+        fs_method="variance", selection_mode="percentile", selection_threshold=0.2
+    )
 
     fsdf_filtered = fs_multivariate.select_features(fs_df)
 
@@ -105,11 +105,12 @@ def test_multivariate_filter_variance_k_best_mode():
     fs_df = FSDataFrame(df=df, sample_col="Sample", label_col="label")
 
     # create FSMultivariate instance
-    fs_multivariate = FSMultivariate(fs_method="variance",
-                                     selection_mode="k_best",
-                                     selection_threshold=68100000.0
-                                     # TODO: check this value (should be normalized variance?)
-                                     )
+    fs_multivariate = FSMultivariate(
+        fs_method="variance",
+        selection_mode="k_best",
+        selection_threshold=68100000.0,
+        # TODO: check this value (should be normalized variance?)
+    )
 
     fsdf_filtered = fs_multivariate.select_features(fs_df)
 
@@ -119,4 +120,3 @@ def test_multivariate_filter_variance_k_best_mode():
     # Export the filtered DataFrame as Pandas DataFrame
     df_filtered = fsdf_filtered.to_pandas()
     df_filtered.to_csv("filtered_tnbc_data.csv", index=False)
-

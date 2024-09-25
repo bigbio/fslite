@@ -42,7 +42,7 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
 
 
 def remove_features_by_missingness_rate(
-        fsdf: FSDataFrame, threshold: float = 0.15
+    fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
@@ -123,6 +123,7 @@ def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[in
 
 
 # define a function to convert a numerical vector to percentile ranks
+
 
 def percentile_rank(vector: np.array) -> np.array:
     """
