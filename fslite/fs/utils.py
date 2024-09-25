@@ -131,8 +131,4 @@ def percentile_rank(vector: np.array) -> np.array:
     :param vector: Numerical vector.
     :return: Vector of percentile ranks.
     """
-    # Rank the data and then normalize by the size of the vector to get percentiles
-    ranks = rankdata(vector, method='average')
-    percentile_ranks = ranks / len(vector)
-
-    return percentile_ranks
+    return np.percentile(vector, np.linspace(0, 100, len(vector)))
