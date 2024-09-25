@@ -166,7 +166,9 @@ def multivariate_correlation_selector(
         )
 
     # Select feature index to keep
-    selected_features = [i for i in features_indexes if i not in index_to_remove]
+    mask = np.ones(len(features_indexes), dtype=bool)
+    mask[list(index_to_remove)] = False
+    selected_features = np.array(features_indexes)[mask]
 
     return selected_features
 
