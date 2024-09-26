@@ -38,14 +38,12 @@ class FSDataFrame:
     """
 
     def __init__(
-        self,
-        df: pd.DataFrame,
-        sample_col: Optional[str] = None,
-        label_col: Optional[str] = None,
-        sparse_threshold: float = 0.7,  # Threshold for sparsity
-        memory_threshold: Optional[
-            float
-        ] = 0.75,  # Proportion of system memory to use for dense arrays
+            self,
+            df: pd.DataFrame,
+            sample_col: Optional[str] = None,
+            label_col: Optional[str] = None,
+            sparse_threshold: float = 0.7,  # Threshold for sparsity
+            memory_threshold: Optional[float] = 0.75,  # Proportion of system memory to use for dense arrays
     ):
         """
         Create an instance of FSDataFrame.
@@ -61,21 +59,15 @@ class FSDataFrame:
         in the feature matrix exceeds this value, the matrix is stored in a sparse format unless memory allows.
         :param memory_threshold: Proportion of system memory available to use before deciding on sparse/dense.
         """
-        # TODO: We are loading full data into memory, look for other options. Maybe Dask?
-        self.__df = df.copy()
-
-        # Check for necessary columns
-        columns_to_drop = []
+        # Copy the DataFrame for internal usage
+        self.__df = df
 
         # Handle sample column
         if sample_col:
             if sample_col not in df.columns:
-                raise ValueError(
-                    f"Sample column '{sample_col}' not found in DataFrame."
-                )
+                raise ValueError(f"Sample column '{sample_col}' not found in DataFrame.")
             self.__sample_col = sample_col
             self.__samples = df[sample_col].tolist()
-            columns_to_drop.append(sample_col)
         else:
             self.__sample_col = None
             self.__samples = []
@@ -90,34 +82,32 @@ class FSDataFrame:
         self.__label_col = label_col
         self.__labels = df[label_col].tolist()
 
-        # Encode labels
-        # TODO: Check if labels are categorical or continuous? For now, assume categorical
+        # Encode labels (assume categorical for now)
         label_encoder = LabelEncoder()
         self.__labels_matrix = label_encoder.fit_transform(df[label_col]).tolist()
-        columns_to_drop.append(label_col)
 
-        # Drop both sample and label columns in one step
-        self.__df = self.__df.drop(columns=columns_to_drop)
+        # Select only numerical columns, excluding sample_col and label_col
+        feature_columns = df.select_dtypes(include=[np.number]).columns.tolist()
+        self.__original_features = [col for col in feature_columns if col not in [sample_col, label_col]]
 
-        # Extract features
-        self.__original_features = self.__df.columns.tolist()
+        # Select only the feature columns directly (no drop)
+        numerical_df = df[self.__original_features]
 
-        # Ensure only numerical features are retained
-        numerical_df = self.__df.select_dtypes(include=[np.number])
         if numerical_df.empty:
             raise ValueError("No numerical features found in the DataFrame.")
 
-        # Check sparsity
+        # Calculate sparsity
         num_elements = numerical_df.size
-        num_zeros = np.count_nonzero(numerical_df == 0)
+        num_zeros = (numerical_df == 0).sum().sum()
         sparsity = num_zeros / num_elements
 
+        # Estimate memory usage
         dense_matrix_size = numerical_df.memory_usage(deep=True).sum()  # In bytes
         available_memory = psutil.virtual_memory().available  # In bytes
 
+        # Handle sparse or dense matrix based on sparsity and available memory
         if sparsity > sparse_threshold:
             if dense_matrix_size < memory_threshold * available_memory:
-                # Use dense matrix if enough memory is available
                 logging.info(
                     f"Data is sparse (sparsity={sparsity:.2f}) but enough memory available. "
                     f"Using a dense matrix."
@@ -125,20 +115,14 @@ class FSDataFrame:
                 self.__matrix = numerical_df.to_numpy(dtype=np.float32)
                 self.__is_sparse = False
             else:
-                # Use sparse matrix due to memory constraints
                 logging.info(
                     f"Data is sparse (sparsity={sparsity:.2f}), memory insufficient for dense matrix. "
                     f"Using a sparse matrix representation."
                 )
-                self.__matrix = sparse.csr_matrix(
-                    numerical_df.to_numpy(dtype=np.float32)
-                )
+                self.__matrix = sparse.csr_matrix(numerical_df.to_numpy(dtype=np.float32))
                 self.__is_sparse = True
         else:
-            # Use dense matrix since it's not sparse
-            logging.info(
-                f"Data is not sparse (sparsity={sparsity:.2f}), using a dense matrix."
-            )
+            logging.info(f"Data is not sparse (sparsity={sparsity:.2f}), using a dense matrix.")
             self.__matrix = numerical_df.to_numpy(dtype=np.float32)
             self.__is_sparse = False
 
