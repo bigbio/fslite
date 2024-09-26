@@ -11,10 +11,12 @@ def tag(label: str):
     :param label: tag label
     :return: decorator
     """
+
     def decorator(func):
         def wrapper(*args, **kwargs):
             print(f"Tag for {func.__name__}: {label}")
             return func(*args, **kwargs)
 
         return wrapper
+
     return decorator

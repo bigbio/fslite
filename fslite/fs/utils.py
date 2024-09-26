@@ -2,12 +2,13 @@ import logging
 from typing import Dict, Tuple, Set
 
 import networkx as nx
-import pyspark.sql.functions as f
+import numpy as np
 from networkx.algorithms.mis import maximal_independent_set
-from pyspark.ml.feature import Imputer
+from scipy.stats import rankdata
+from sklearn.impute import SimpleImputer
 
-from fsspark.fs.core import FSDataFrame
-from fsspark.utils.generic import tag
+from fslite.fs.fdataframe import FSDataFrame
+from fslite.utils.generic import tag
 
 logging.basicConfig(format="%(levelname)s (%(name)s %(lineno)s): %(message)s")
 logger = logging.getLogger("FSSPARK:UTILS")
@@ -27,20 +28,21 @@ def compute_missingness_rate(fsdf: FSDataFrame) -> Dict[str, float]:
     n_instances = fsdf.count_instances()  # number of instances/samples.
     features = fsdf.get_features_names()  # list of features (column) names
 
-    missing_rates = sdf.select(
-        [
-            (
-                    f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0)) / n_instances
-            ).alias(c)
-            for c in features
-        ]
-    )
+    # missing_rates = sdf.select(
+    #     [
+    #         (
+    #             f.sum(f.when(f.isnan(sdf[c]) | f.isnull(sdf[c]), 1).otherwise(0))
+    #             / n_instances
+    #         ).alias(c)
+    #         for c in features
+    #     ]
+    # )
 
-    return missing_rates.first().asDict()
+    # return missing_rates.first().asDict()
 
 
 def remove_features_by_missingness_rate(
-        fsdf: FSDataFrame, threshold: float = 0.15
+    fsdf: FSDataFrame, threshold: float = 0.15
 ) -> FSDataFrame:
     """
     Remove features from FSDataFrame with missingness rate higher or equal than a specified threshold.
@@ -78,7 +80,7 @@ def impute_missing(fsdf: FSDataFrame, strategy: str = "mean") -> FSDataFrame:
     col_features = fsdf.get_features_names()
 
     sdf_imputed = (
-        Imputer()
+        SimpleImputer()
         .setStrategy(strategy)
         .setInputCols(col_features)
         .setOutputCols(col_features)
@@ -107,7 +109,9 @@ def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[in
 
     :return: Set of indices (maximal independent set or remaining indices).
     """
-    logger.warning("This method is experimental and have been not extensively tested...")
+    logger.warning(
+        "This method is experimental and have been not extensively tested..."
+    )
 
     graph = nx.Graph()
     graph.add_edges_from(pairs)
@@ -116,3 +120,16 @@ def find_maximal_independent_set(pairs: Tuple[int], keep: bool = True) -> Set[in
         return set(max_ind_set)
     else:
         return set([int(i) for i in graph.nodes if i not in max_ind_set])
+
+
+# define a function to convert a numerical vector to percentile ranks
+
+
+def percentile_rank(vector: np.array) -> np.array:
+    """
+    Convert a numerical vector to percentile ranks.
+
+    :param vector: Numerical vector.
+    :return: Vector of percentile ranks.
+    """
+    return np.percentile(vector, np.linspace(0, 100, len(vector)))

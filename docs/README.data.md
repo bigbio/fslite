@@ -1,9 +1,9 @@
-## fsspark - data structures
+## fslite - data structures
 
 --- 
 
-`fsspark` is a Python package that provides a set of tools for feature selection in Spark. 
-Here we describe the main data structures used in `fsspark` and how to use them.
+`fslite` is a Python package that provides a set of tools for feature selection in Spark. 
+Here we describe the main data structures used in `fslite` and how to use them.
 
 ### Input data
 
@@ -32,30 +32,32 @@ The following is an example of a TSV file with a binary response variable:
 
 ### Import functions
 
-`fsspark` provides two main functions to import data from a TSV file.
+`fslite` provides two main functions to import data from a TSV file.
 
 - `import_table` - Import data from a TSV file into a Spark Data Frame (sdf).
 
 ```python
-from fsspark.utils.io import import_table
-sdf = import_table('data.tsv.bgz', 
-                    sep='\t', 
-                    n_partitions=5)
+from fslite.utils.io import import_table
+
+sdf = import_table('data.tsv.bgz',
+                   sep='\t',
+                   n_partitions=5)
 ```
 
 - `import_table_as_psdf` - Import data from a TSV file into a Spark Data Frame (sdf) and 
 convert it into a Pandas on Spark Data Frame (psdf).
 
 ```python
-from fsspark.utils.io import import_table_as_psdf
-psdf = import_table_as_psdf('data.tsv.bgz', 
-                            sep='\t', 
+from fslite.utils.io import import_table_as_psdf
+
+psdf = import_table_as_psdf('data.tsv.bgz',
+                            sep='\t',
                             n_partitions=5)
 ```
 
 ### The Feature Selection Spark Data Frame (FSDataFrame)
 
-The `FSDataFrame` (**Figure 1**) is a core functionality of `fsspark`. It is a wrapper around a Spark Data Frame (sdf) 
+The `FSDataFrame` (**Figure 1**) is a core functionality of `fslite`. It is a wrapper around a Spark Data Frame (sdf) 
 that provides a set of methods to facilitate feature selection tasks. The `FSDataFrame` is initialized 
 with a Spark Data Frame (sdf) or a Pandas on Spark Data Frame (psdf) and two mandatory arguments: 
 `sample_col` and `label_col`. The `sample_col` argument is the name of the column in the sdf that 
@@ -73,9 +75,9 @@ contains the response variable.
 #### How to create a Feature Selection Spark Data Frame (FSDF)
 
 ```python
-from fsspark.config.context import init_spark, stop_spark_session
-from fsspark.fs.core import FSDataFrame
-from fsspark.utils.io import import_table_as_psdf
+from fslite.config.context import init_spark, stop_spark_session
+from fslite.fs.core import FSDataFrame
+from fslite.utils.io import import_table_as_psdf
 
 # Init spark
 init_spark()

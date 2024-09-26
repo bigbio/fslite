@@ -1,10 +1,10 @@
 
-# fsspark - features selection methods 
+# fslite - features selection methods 
 
 ---
 
-`fsspark `includes a set of methods to perform feature selection and machine learning based on spark.
-A typical workflow written using `fsspark` can be divided roughly in four major stages:
+`fslite `includes a set of methods to perform feature selection and machine learning based on spark.
+A typical workflow written using `fslite` can be divided roughly in four major stages:
 
 1) data pre-processing. 
 2) univariate filters. 
@@ -53,4 +53,4 @@ A typical workflow written using `fsspark` can be divided roughly in four major 
 
 ### 5. Feature selection pipeline example
 
-[FS pipeline example](../fsspark/pipeline/fs_pipeline_example.py)
+[FS pipeline example](../fslite/pipeline/fs_pipeline_example.py)
